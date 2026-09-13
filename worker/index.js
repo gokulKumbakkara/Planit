@@ -240,7 +240,14 @@ async function updateItem(request, env, id) {
       set('priority', p);
     }
   }
-  if ('done' in body) set('done', toFlag(body.done));
+  if ('done' in body) {
+    const doneFlag = toFlag(body.done);
+    set('done', doneFlag);
+    // Stamp (or clear) when this was last completed — independent of the
+    // item's own date, so "finished today" can surface on Today regardless
+    // of what day the item was actually due.
+    set('done_at', doneFlag ? istDate() : null);
+  }
   if ('deleted' in body) set('deleted', toFlag(body.deleted));
 
   if (!sets.length) return fail('No updatable fields supplied');

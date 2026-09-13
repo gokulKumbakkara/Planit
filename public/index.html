@@ -160,6 +160,7 @@ a{color:inherit;text-decoration:none}
 .grp-lbl .rule{flex:1;height:1px;background:var(--rule-2)}
 
 .row{display:flex;align-items:flex-start;gap:12px;padding:9px 10px 9px 0;transition:background .15s;touch-action:manipulation}
+.row,.row *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .row:hover{background:rgba(255,255,255,.016)}
 .row-main{flex:1;min-width:0}
 .row-title{font-size:14.5px;font-weight:500;line-height:1.45;word-break:break-word}
@@ -298,6 +299,7 @@ textarea{resize:vertical;min-height:52px}
 .datechip svg{width:10px;height:10px}
 
 .brow{display:flex;align-items:flex-start;gap:12px;padding:11px 10px 11px 0;border-bottom:1px solid var(--rule);transition:background .15s;touch-action:manipulation}
+.brow,.brow *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .brow:hover{background:rgba(255,255,255,.016)}
 .brow:last-child{border-bottom:0}
 .brow.done{opacity:.58}
@@ -334,6 +336,27 @@ textarea{resize:vertical;min-height:52px}
 .cal-dot{position:absolute;bottom:2.5px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--accent)}
 .cal-day.today .cal-dot{background:#1c1b1a}
 .cal-note{font-size:11.5px;color:var(--faint);margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+
+/* press-and-hold note peek — big, calm, nothing else on screen */
+.note-peek{
+  position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
+  padding:28px;background:rgba(10,10,9,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+}
+/* The peek opens while the triggering touch is still down — without this,
+   that still-held finger can start a native selection on the freshly
+   rendered text the instant it appears underneath it. */
+.note-peek,.note-peek *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.note-peek-card{
+  width:100%;max-width:420px;max-height:72vh;overflow-y:auto;
+  background:var(--surface-2);border:1px solid var(--rule-2);border-radius:16px;
+  padding:20px 22px;box-shadow:0 24px 64px rgba(0,0,0,.5);
+}
+.note-peek-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px}
+.note-peek-title{flex:1;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:-.005em;padding-top:2px}
+.note-peek-x{width:26px;height:26px;flex:none;border-radius:6px;display:grid;place-items:center;color:var(--faint)}
+.note-peek-x:hover{background:var(--surface);color:var(--ink)}
+.note-peek-x svg{width:13px;height:13px}
+.note-peek-body{font-size:17px;line-height:1.65;color:var(--ink);white-space:pre-wrap;word-break:break-word}
 
 .toast{
   position:fixed;bottom:24px;left:50%;transform:translate(-50%,10px);
@@ -701,6 +724,18 @@ textarea{resize:vertical;min-height:52px}
   </a>
 </nav>
 
+<div class="note-peek" id="note-peek" hidden>
+  <div class="note-peek-card" role="dialog" aria-modal="true" aria-labelledby="note-peek-title">
+    <div class="note-peek-head">
+      <span class="note-peek-title" id="note-peek-title"></span>
+      <button type="button" class="note-peek-x" id="note-peek-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="note-peek-body" id="note-peek-body"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span></span></div>
 
 <script>
@@ -1019,6 +1054,26 @@ function toast(msg, bad) {
   toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
 }
 
+function showNotePeek(item) {
+  $('#note-peek-title').textContent = item.title;
+  $('#note-peek-body').textContent = item.note;
+  $('#note-peek').hidden = false;
+}
+function hideNotePeek() {
+  $('#note-peek').hidden = true;
+}
+function wireNotePeek() {
+  $('#note-peek-close').addEventListener('click', hideNotePeek);
+  // Tap/click the dimmed backdrop (not the card itself) to dismiss.
+  $('#note-peek').addEventListener('click', (e) => { if (e.target.id === 'note-peek') hideNotePeek(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('#note-peek').hidden) hideNotePeek();
+  });
+  // The triggering touch is often still down when this appears — stop it
+  // from starting a native selection on the text it lands on.
+  $('#note-peek').addEventListener('selectstart', (e) => e.preventDefault());
+}
+
 async function refresh() {
   state.items = await api('/api/items');
   render();
@@ -1104,35 +1159,86 @@ const prioTag = (item) => (PRIORITIZED.has(item.type) && item.priority
  * A click that lands on an actual control (checkbox, an action button in
  * Backlog) is left alone so it can do its own job.
  */
-function bindEditGesture(rowEl, item) {
+/**
+ * Double-click (laptop) / double-tap (iPhone/iPad) opens the item in edit
+ * mode, same as before. Press-and-hold — mouse held down, or a touch that
+ * doesn't lift — instead peeks at just the note: useful for a moment you
+ * don't want the full form, like reading a grocery list off "Buy groceries"
+ * while you're standing in the shop. A click that lands on an actual control
+ * (checkbox, a Backlog action button) is left alone either way.
+ */
+function bindRowGestures(rowEl, item) {
   const isControl = (e) => e.target.closest('button, input, textarea, a');
+
+  // CSS user-select:none alone doesn't reliably stop some mobile browsers
+  // from starting native text selection on a long press — belt-and-braces.
+  rowEl.addEventListener('selectstart', (e) => { if (!isControl(e)) e.preventDefault(); });
 
   rowEl.addEventListener('dblclick', (e) => {
     if (isControl(e)) return;
     loadForEdit(item);
   });
 
-  let lastTap = 0, lastX = 0, lastY = 0;
-  rowEl.addEventListener('touchend', (e) => {
+  const HOLD_MS = 450;
+  const DRIFT_PX = 10;
+  let holdTimer = null;
+  let holdFired = false;
+  let startX = 0, startY = 0;
+
+  const armHold = (x, y) => {
+    startX = x; startY = y;
+    holdFired = false;
+    clearTimeout(holdTimer);
+    holdTimer = item.note ? setTimeout(() => { holdFired = true; showNotePeek(item); }, HOLD_MS) : null;
+  };
+  const driftCheck = (x, y) => {
+    if (holdTimer && (Math.abs(x - startX) > DRIFT_PX || Math.abs(y - startY) > DRIFT_PX)) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  };
+  const disarmHold = () => { clearTimeout(holdTimer); holdTimer = null; };
+
+  // Mouse: click-and-hold.
+  rowEl.addEventListener('mousedown', (e) => {
+    if (isControl(e) || e.button !== 0) return;
+    armHold(e.clientX, e.clientY);
+  });
+  rowEl.addEventListener('mousemove', (e) => driftCheck(e.clientX, e.clientY));
+  rowEl.addEventListener('mouseup', disarmHold);
+  rowEl.addEventListener('mouseleave', disarmHold);
+
+  // Touch: press-and-hold to peek, or two quick taps to edit — never both
+  // for the same touch (a hold that already fired doesn't also count as a tap).
+  let lastTap = 0, lastTapX = 0, lastTapY = 0;
+  rowEl.addEventListener('touchstart', (e) => {
     if (isControl(e)) return;
+    const t = e.touches[0];
+    armHold(t.clientX, t.clientY);
+  }, { passive: true });
+  rowEl.addEventListener('touchmove', (e) => driftCheck(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  rowEl.addEventListener('touchend', (e) => {
+    disarmHold();
+    if (isControl(e) || holdFired) return;
     const t = e.changedTouches[0];
     const now = Date.now();
-    const closeEnough = Math.abs(t.clientX - lastX) < 30 && Math.abs(t.clientY - lastY) < 30;
+    const closeEnough = Math.abs(t.clientX - lastTapX) < 30 && Math.abs(t.clientY - lastTapY) < 30;
     if (now - lastTap < 350 && closeEnough) {
       e.preventDefault();
       lastTap = 0;
       loadForEdit(item);
     } else {
-      lastTap = now; lastX = t.clientX; lastY = t.clientY;
+      lastTap = now; lastTapX = t.clientX; lastTapY = t.clientY;
     }
   }, { passive: false });
+  rowEl.addEventListener('touchcancel', disarmHold);
 
   return rowEl;
 }
 
 function lookoutRow(item, today) {
   const due = dueLabel(item.date, today);
-  return bindEditGesture(el('div', { class: 'row' + (item.done ? ' done' : '') },
+  return bindRowGestures(el('div', { class: 'row' + (item.done ? ' done' : '') },
     marker(item),
     el('div', { class: 'row-main' },
       el('div', { class: 'row-title', text: item.title }),
@@ -1148,12 +1254,18 @@ function lookoutRow(item, today) {
 }
 
 function dayRow(item, today) {
-  const overdueDays = item.type === 'todo' && item.date && item.date < today ? daysFrom(item.date, today) : 0;
-  // The carry-dot's colour + tooltip already say how overdue this is —
-  // no need to repeat "since <date>" in the note line too.
-  const sub = [rangeLabel(item, today), item.note || null].filter(Boolean).join('  ·  ');
+  // The carry-dot means "still outstanding and overdue" — never on a done item.
+  const overdueDays = item.type === 'todo' && !item.done && item.date && item.date < today ? daysFrom(item.date, today) : 0;
+  // A task finished today shows up here even when it was due some other day
+  // (or has no date at all) — this is the one place that needs saying so.
+  const doneElsewhere = item.done && item.type === 'todo' && !coversToday(item, today);
+  const sub = [
+    doneElsewhere && item.date ? `was due ${fmtDate(item.date, { weekday: 'short', day: 'numeric', month: 'short' })}` : null,
+    rangeLabel(item, today),
+    item.note || null,
+  ].filter(Boolean).join('  ·  ');
 
-  return bindEditGesture(el('div', { class: 'row' + (item.done ? ' done' : '') },
+  return bindRowGestures(el('div', { class: 'row' + (item.done ? ' done' : '') },
     marker(item),
     el('div', { class: 'row-main' },
       el('div', { class: 'row-title', text: item.title }),
@@ -1172,7 +1284,7 @@ function dayRow(item, today) {
 }
 
 function soonRow(item, today) {
-  return bindEditGesture(el('div', { class: 'row' + (item.done ? ' done' : '') },
+  return bindRowGestures(el('div', { class: 'row' + (item.done ? ' done' : '') },
     marker(item),
     el('div', { class: 'row-main' },
       el('div', { class: 'row-title', text: item.title }),
@@ -1203,6 +1315,13 @@ function renderToday() {
   // as one list, rather than as two blocks stuck together.
   const overdueTodos = visible
     .filter((i) => i.type === 'todo' && !i.done && i.date && i.date < today && !coversToday(i, today));
+
+  // A task finished today is evidence of what you actually did today — show
+  // it even when it was due some other day (or never had a date at all).
+  // Tasks due today already come through `todays` below, so this only adds
+  // the ones that wouldn't otherwise appear.
+  const doneToday = visible
+    .filter((i) => i.type === 'todo' && i.done && i.done_at === today && !coversToday(i, today));
 
   // Everything ahead of today, nearest first.
   const future = dayBound
@@ -1237,7 +1356,7 @@ function renderToday() {
 
   // Completion counts tasks only; events have no done concept.
   // Carried-forward todos count too — they're still outstanding work.
-  const countable = todays.filter((i) => i.type !== 'event').concat(overdueTodos);
+  const countable = todays.filter((i) => i.type !== 'event').concat(overdueTodos).concat(doneToday);
   const done = countable.filter((i) => i.done).length;
   const pct = countable.length ? Math.round((done / countable.length) * 100) : 0;
   $('#d-bar').style.width = `${pct}%`;
@@ -1248,7 +1367,7 @@ function renderToday() {
     host.replaceChildren();
 
     const mine = type === 'todo'
-      ? sortForColumn(overdueTodos.concat(todays.filter((i) => i.type === type)), type)
+      ? sortForColumn(overdueTodos.concat(doneToday).concat(todays.filter((i) => i.type === type)), type)
       : sortForColumn(todays.filter((i) => i.type === type), type);
     const open = mine.filter((i) => !i.done).length;
     $('#n-' + type).textContent = mine.length ? (type === 'event' ? String(mine.length) : `${open} open`) : '';
@@ -1295,7 +1414,7 @@ function renderToday() {
   $('#today-groups').hidden = bare;
 
   // Nothing today but work further out: one quiet line beats three empty groups.
-  const clearToday = !bare && todays.length === 0 && overdueTodos.length === 0;
+  const clearToday = !bare && todays.length === 0 && overdueTodos.length === 0 && doneToday.length === 0;
   $('#today-types').hidden = clearToday;
   $('#today-none').hidden = !clearToday;
 
@@ -1367,7 +1486,7 @@ function backlogRow(item, today) {
     item.note || null,
   ].filter(Boolean);
 
-  return bindEditGesture(el('div', { class: 'brow' + (item.done ? ' done' : '') },
+  return bindRowGestures(el('div', { class: 'brow' + (item.done ? ' done' : '') },
     marker(item),
     el('div', { class: 'row-main' },
       el('div', { class: 'row-title', text: item.title }),
@@ -1722,6 +1841,7 @@ function route() {
   for (const a of document.querySelectorAll('[data-nav]')) a.classList.toggle('active', a.dataset.nav === view);
   document.title = view === 'backlog' ? 'Backlog · Planit' : 'Today · Planit';
   $('.main').scrollTop = 0;
+  hideNotePeek();
 }
 
 /* ── boot ────────────────────────────────────────────────── */
@@ -1729,6 +1849,7 @@ function route() {
 async function boot() {
   wireForm();
   wireFilters();
+  wireNotePeek();
   window.addEventListener('hashchange', route);
   route();
 

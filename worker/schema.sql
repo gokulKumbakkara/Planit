@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS items (
   note TEXT,
   priority TEXT CHECK(priority IN ('high','med','low')),
   done INTEGER DEFAULT 0,
+  done_at TEXT,                    -- IST date last marked done; NULL if never/not done
   deleted INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
 );
