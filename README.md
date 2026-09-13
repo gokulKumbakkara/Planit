@@ -1,13 +1,67 @@
 # Planit
 
-Personal life dashboard — events, tasks and open loops in one
-place. Runs entirely on Cloudflare: a Worker for the API, D1 for storage, and
-static assets served from the edge.
-
-All resources — the Worker, the D1 database, the project folder — are named
-`planit` / `planit-db`.
+Personal life dashboard — events, tasks and open loops in one place. Runs
+entirely on Cloudflare: a Worker for the API, D1 for storage, and static
+assets served from the edge.
 
 **Live:** https://planit.gokulkumbakkara.workers.dev
+
+---
+
+## Features
+
+- **Two views** — **Today** (progress bar, Events/Tasks panels, "Look out"
+  open loops, right-rail month calendar and a "Coming up" list) and
+  **Backlog** (every item grouped by date, with type/status/date-range filters
+  and search across titles and notes)
+- **Three item kinds** — Events (fixed, not checkable), Tasks (checkable,
+  count toward daily progress, High/Med/Low priority), and Look-outs (open
+  loops that stay visible until ticked off, dated or not)
+- **Overdue tasks carry forward** automatically onto Today instead of
+  vanishing, sorted oldest first, with an ageing color indicator
+- **Date ranges** on any dated item — either "any day in this range" or
+  "every day in this range"
+- **No push notifications, by design** — Web Push can't reliably reach a
+  device without an active connection (and on iOS/iPadOS only once installed
+  to the Home Screen), so the app is built to be checked, not pinged
+- **Touch-aware responsive layout** — sidebar becomes a bottom tab bar on
+  iPhone / narrow Split View, 44px touch targets via `(hover: none)` /
+  `(pointer: coarse)` detection, custom time-entry control instead of the
+  native `<input type="time">`
+
+---
+
+## Tech Stack
+
+- **Frontend**: single-file vanilla JavaScript (`public/index.html`), no build step
+- **Backend**: Cloudflare Worker (`worker/index.js`), no framework — raw Fetch API routing
+- **Database**: Cloudflare D1 (`worker/schema.sql`)
+- **Deployment**: Wrangler, `[assets]` static-asset binding (no legacy Workers Sites dependency)
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js and npm
+- A free [Cloudflare](https://cloudflare.com) account (Workers + D1)
+
+### Installation
+
+```bash
+npm install
+npx wrangler login
+npx wrangler d1 create planit-db          # paste database_id into wrangler.toml
+npm run db:init                           # apply schema to remote D1
+npm run deploy
+```
+
+Then open the URL and add an item.
+
+---
+
+## Project Structure
 
 ```
 public/index.html   single-file frontend (vanilla JS, no build step)
@@ -16,26 +70,12 @@ worker/index.js     API routes + static-asset passthrough
 worker/schema.sql   D1 schema
 ```
 
-**No push notifications, by design.** Web Push only reaches a device with an
-active network connection, and on iOS/iPadOS only once the site is installed
-to the Home Screen — it can't match a phone's native, offline-capable
-notification system, and a silently-missed reminder is worse than none. The
-app is built to be checked, not pinged: open it, see what's due, and overdue
-work carries forward rather than disappearing (see **Item kinds** below).
+All resources — the Worker, the D1 database, the project folder — are named
+`planit` / `planit-db`.
 
-## Deploy from scratch
+---
 
-```bash
-npm install
-npx wrangler login
-npx wrangler d1 create planit-db          # paste database_id into wrangler.toml
-npm run db:init                          # apply schema to remote D1
-npm run deploy
-```
-
-Then open the URL and add an item.
-
-## API
+## API Reference
 
 | Method | Route | Notes |
 |---|---|---|
@@ -48,7 +88,9 @@ Then open the URL and add an item.
 All responses are JSON with `Access-Control-Allow-Origin: *`; `OPTIONS` is
 handled for preflight. Failures return `{ error }` with a 4xx/5xx status.
 
-## Item kinds
+---
+
+## Item Kinds
 
 | Kind | Date | Notes |
 |---|---|---|
@@ -74,7 +116,9 @@ day. A range means one of two things, and you pick which:
 
 Both stay on the dashboard for the whole range.
 
-## Deliberate deviations from the original spec
+---
+
+## Architecture Decisions
 
 The original brief called for Web Push (VAPID + `crypto.subtle`, a service
 worker, a cron digest). That was built, worked, and was then removed at the
@@ -88,14 +132,14 @@ Also: the original spec's `[site] bucket` (legacy Workers Sites) needs the
 which contradicts "wrangler as the only dependency". `[assets]` in
 `wrangler.toml` is the current, dependency-free equivalent.
 
-## Logo
+---
 
-A checkmark on a rounded square, sage on the app's warm charcoal —
+## Interface Details
+
+**Logo:** a checkmark on a rounded square, sage on the app's warm charcoal —
 `public/icon.png` (512px), `icon-maskable.png` (Android safe-zone padding),
 `icon.svg` (monochrome Safari pinned-tab mark). The same mark is inlined in
 the sidebar wordmark.
-
-## Interface
 
 Two views behind a shared top bar (title, search, add, avatar).
 
