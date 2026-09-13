@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Planit — deployment steps
+#
+#   1. npm install
+#   2. wrangler login
+#   3. wrangler d1 create planit-db          → paste the database_id below
+#   4. wrangler d1 execute planit-db --file=worker/schema.sql --remote
+#   5. wrangler deploy
+#   6. Open the URL, add an item, done.
+#
+# NOTE ON STATIC ASSETS: the original spec used `[site] bucket = "./public"`
+# (legacy Workers Sites). That path needs the `@cloudflare/kv-asset-handler`
+# npm package and a __STATIC_CONTENT KV namespace, which contradicts the
+# "wrangler as the only dependency" requirement. `[assets]` below is the
+# current, dependency-free equivalent: assets are served from the edge first,
+# and anything that is not a file (i.e. /api/*) falls through to the Worker.
+#
+# NO PUSH NOTIFICATIONS, BY DESIGN: Web Push only reaches a device with an
+# active network connection, and on iOS/iPadOS only once the site is added to
+# the Home Screen — it can't match a phone's native, offline-capable
+# notification system, and a silently-missed reminder is worse than none. The
+# app is built to be checked, not pinged, hence no [triggers]/crons here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name = "planit"
+main = "worker/index.js"
+compatibility_date = "2025-01-15"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "none"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "planit-db"
+database_id = "e8968653-84a8-46b5-9150-21946503e463"
+
+[observability]
+enabled = true

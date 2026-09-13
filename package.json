@@ -1,0 +1,16 @@
+{
+  "name": "planit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Planit — personal dashboard on Cloudflare Workers + D1",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute planit-db --file=worker/schema.sql --remote",
+    "db:init:local": "wrangler d1 execute planit-db --file=worker/schema.sql --local"
+  },
+  "devDependencies": {
+    "wrangler": "^4.30.0"
+  },
+  "type": "module"
+}

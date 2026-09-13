@@ -1,0 +1,1751 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#1c1b1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Planit">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>Planit</title>
+<link rel="icon" type="image/png" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="mask-icon" href="/icon.svg" color="#7d9b76">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   Soft Dusk — warm charcoal, one sage accent, no gradients.
+   Committed single-theme dark: every colour is painted from a
+   token, nothing inherits the host ground.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  --bg:#1c1b1a;
+  --surface:#242322;
+  --surface-2:#2a2827;
+  --rule:#2b2927;
+  --rule-2:#3a3734;
+
+  --ink:#f5f3ef;
+  --ink-2:#d6d0c7;
+  --muted:#aea79e;
+  --faint:#8f8981;
+
+  --accent:#93b58a;
+  --accent-dim:#7d9b76;
+  --accent-soft:rgba(147,181,138,.15);
+  --accent-line:rgba(147,181,138,.4);
+
+  --look:#84a7b0;
+  --high:#d08469;
+  --med:#cda86a;
+  --low:#93b58a;
+
+  --font:'Public Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+
+  accent-color:#93b58a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;height:100dvh}
+html{-webkit-text-size-adjust:100%}
+body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:var(--font);font-size:14px;line-height:1.5;
+  display:flex;overflow:hidden;
+}
+button,input,textarea{font-family:inherit;color:inherit;font-size:inherit}
+button{cursor:pointer;background:none;border:0}
+a{color:inherit;text-decoration:none}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.tnum{font-variant-numeric:tabular-nums}
+
+.scroll{scrollbar-width:thin;scrollbar-color:#3a3734 transparent}
+.scroll::-webkit-scrollbar{width:9px;height:9px}
+.scroll::-webkit-scrollbar-thumb{background:#332f2d;border-radius:9px;border:2.5px solid transparent;background-clip:content-box}
+.scroll::-webkit-scrollbar-thumb:hover{background:#443f3c;background-clip:content-box}
+
+/* ── sidebar ─────────────────────────────────────────────── */
+.sidebar{
+  width:216px;flex:none;height:100vh;height:100dvh;
+  border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;padding:24px 0 16px;
+}
+.brand{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;letter-spacing:-.01em;padding:0 20px 26px}
+.brand-mark{width:22px;height:22px;flex:none}
+.nav{display:flex;flex-direction:column}
+.nav a{
+  display:flex;align-items:center;gap:10px;padding:9px 20px;
+  font-size:13.5px;font-weight:500;color:var(--muted);
+  box-shadow:inset 2px 0 0 transparent;
+  transition:color .15s,background .15s,box-shadow .15s;
+}
+.nav a:hover{color:var(--ink-2);background:rgba(255,255,255,.018)}
+.nav a.active{color:var(--ink);background:var(--surface);box-shadow:inset 2px 0 0 var(--accent);font-weight:500}
+.nav .n{margin-left:auto;font-size:12px;color:var(--faint)}
+
+.side-lbl{
+  font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);padding:30px 20px 10px;
+}
+.side-stat{display:flex;align-items:center;gap:10px;padding:6px 20px;font-size:13px;color:var(--ink-2)}
+.side-stat .d{width:6px;height:6px;border-radius:50%;flex:none}
+.side-stat .n{margin-left:auto;font-size:12px;color:var(--faint)}
+
+.side-foot{margin-top:auto;padding:14px 20px 0;border-top:1px solid var(--rule);margin-left:0}
+.user{display:flex;align-items:center;gap:11px;min-width:0}
+.avatar{
+  width:30px;height:30px;flex:none;border-radius:50%;
+  border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent);
+  display:grid;place-items:center;font-size:11px;font-weight:600;
+}
+.user-meta{min-width:0}
+.user-name{font-size:13px;font-weight:500}
+.user-mail{font-size:11.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── main ────────────────────────────────────────────────── */
+.main{flex:1;min-width:0;height:100vh;height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.wrap{max-width:1080px;padding:34px 40px 60px}
+.view{display:none}
+.view.on{display:block}
+
+.head{display:flex;align-items:flex-start;gap:24px;margin-bottom:8px}
+.head-l{flex:1;min-width:0}
+.day{font-size:21px;font-weight:600;letter-spacing:-.022em;line-height:1.25}
+.day-sub{font-size:13.5px;color:var(--ink-2);margin-top:4px}
+.day-sub b{color:var(--ink-2);font-weight:500}
+.head-r{display:flex;align-items:center;gap:8px;flex:none}
+
+.search{position:relative;display:flex;align-items:center;width:210px}
+.search svg{position:absolute;left:11px;width:14px;height:14px;color:var(--faint);pointer-events:none}
+.search input{
+  width:100%;background:transparent;border:1px solid var(--rule-2);border-radius:7px;
+  padding:8px 11px 8px 32px;font-size:13px;transition:border-color .15s,background .15s;
+}
+.search input:hover{border-color:#474340}
+.search input:focus{outline:none;border-color:var(--accent-line);background:var(--surface)}
+.search input::placeholder{color:var(--faint)}
+
+.prog{height:2px;background:var(--rule-2);max-width:320px;margin:18px 0 5px}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .45s cubic-bezier(.3,.8,.4,1)}
+.prog-lbl{font-size:12px;color:var(--faint)}
+
+.btn{
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  font-size:13px;font-weight:500;padding:8px 14px;border-radius:7px;
+  border:1px solid var(--rule-2);color:var(--ink-2);transition:.15s;
+}
+.btn:hover{color:var(--ink);border-color:#474340;background:var(--surface)}
+.btn svg{width:14px;height:14px}
+.btn-primary{background:var(--accent);color:#1c1b1a;border-color:var(--accent);font-weight:600}
+.btn-primary:hover{background:#8aa883;color:#1c1b1a;border-color:#8aa883}
+.btn-primary:disabled{opacity:.5;cursor:default;background:var(--accent)}
+.btn-quiet{border-color:transparent;color:var(--muted)}
+.btn-quiet:hover{border-color:transparent}
+
+/* ── groups ──────────────────────────────────────────────── */
+.grp{margin-top:32px}
+.grp-lbl{
+  display:flex;align-items:center;gap:11px;margin-bottom:4px;
+  font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+}
+.grp-lbl .n{color:var(--muted);letter-spacing:.06em;font-weight:500}
+.grp-lbl .rule{flex:1;height:1px;background:var(--rule-2)}
+
+.row{display:flex;align-items:flex-start;gap:12px;padding:9px 10px 9px 0;transition:background .15s;touch-action:manipulation}
+.row:hover{background:rgba(255,255,255,.016)}
+.row-main{flex:1;min-width:0}
+.row-title{font-size:14.5px;font-weight:500;line-height:1.45;word-break:break-word}
+.row-sub{font-size:12.5px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-side{display:flex;align-items:center;gap:12px;flex:none;padding-top:2px}
+.row-time{font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pr{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+/* due labels are sentences, not severity pills — no shouting */
+.pr.look,.pr.overdue{text-transform:none;letter-spacing:0;font-weight:500;font-size:12px}
+.pr.look{color:var(--look)}
+.pr.overdue{color:var(--high);font-weight:600}
+.pr.high{color:var(--high)}
+.pr.med{color:var(--med)}
+.pr.low{color:var(--low)}
+.rel{font-size:12px;color:var(--accent);white-space:nowrap}
+
+/* the dot doubles as the checkbox for tasks */
+.slot{width:18px;height:18px;flex:none;display:grid;place-items:center;margin-top:3px}
+.cb{
+  position:relative;
+  width:14px;height:14px;border-radius:50%;border:1.5px solid #625b54;
+  display:grid;place-items:center;transition:background .18s,border-color .18s,transform .12s;
+}
+.cb.sq{border-radius:4px}
+.cb::before{content:'';position:absolute;inset:-12px;border-radius:50%}  /* 44px touch target */
+
+.cb:hover{border-color:var(--accent)}
+.cb:active{transform:scale(.86)}
+.cb svg{width:8px;height:8px;opacity:0;transition:opacity .18s}
+.cb[aria-checked="true"]{background:var(--accent);border-color:var(--accent)}
+.cb[aria-checked="true"] svg{opacity:1}
+.pip{width:6px;height:6px;border-radius:50%;background:var(--accent-dim)}
+.pip.lookout{background:var(--look)}
+
+/* done — the entire item reads as struck through */
+.row.done{opacity:.58}
+.row.done .row-main,.row.done .row-time{
+  text-decoration:line-through;text-decoration-color:#7d766d;text-decoration-thickness:1px;
+}
+.row.done .row-title{color:var(--faint)}
+.row.done .pr{opacity:.6}
+
+.empty{padding:18px 0 6px;font-size:13px;color:var(--faint)}
+
+/* ── backlog ─────────────────────────────────────────────── */
+.b-cols{display:grid;grid-template-columns:minmax(0,1fr) 214px;gap:38px;align-items:start;margin-top:26px}
+
+.form{border:1px solid var(--rule);border-radius:6px;padding:18px}
+.form-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+.form-grid{display:grid;grid-template-columns:1fr 150px 118px;gap:14px}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field.wide{grid-column:1/-1}
+.lbl{font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);display:flex;align-items:center;gap:9px}
+.lnk{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:none;color:var(--accent);padding:1px 2px;border-radius:4px}
+.lnk:hover{text-decoration:underline}
+#f-end-wrap{grid-column:2/-1}
+@media(max-width:900px){#f-end-wrap{grid-column:auto}}
+input[type=text],input[type=date],input[type=time],textarea{
+  width:100%;background:var(--surface);border:1px solid var(--rule-2);border-radius:6px;
+  padding:9px 11px;color:var(--ink);color-scheme:dark;transition:border-color .15s;
+}
+input:hover,textarea:hover{border-color:#474340}
+input:focus,textarea:focus{outline:none;border-color:var(--accent-line);background:var(--surface-2)}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+textarea{resize:vertical;min-height:52px}
+::-webkit-calendar-picker-indicator{filter:invert(.66) sepia(.12);cursor:pointer;opacity:.55}
+
+/* custom time field — the native time popup is an unstyleable system widget */
+.tf{position:relative}
+.tf input{padding-right:30px}
+.tf-clear{
+  position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  width:19px;height:19px;border-radius:4px;display:grid;place-items:center;color:var(--faint);
+}
+.tf-clear:hover{background:var(--surface-2);color:var(--ink)}
+.tf-clear svg{width:10px;height:10px}
+.tf-pop{
+  position:absolute;z-index:40;top:calc(100% + 5px);left:0;right:0;
+  background:var(--surface-2);border:1px solid var(--rule-2);border-radius:9px;
+  box-shadow:0 16px 38px rgba(0,0,0,.6);overflow:hidden;
+}
+.tf-list{max-height:222px;overflow-y:auto;padding:5px}
+.tf-opt{
+  display:block;width:100%;text-align:left;padding:7px 11px;border-radius:6px;
+  font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums;
+}
+.tf-opt:hover,.tf-opt.hl{background:var(--surface);color:var(--ink)}
+.tf-opt.on{color:var(--accent);font-weight:600}
+.tf-none{padding:11px;font-size:12.5px;color:var(--faint)}
+
+/* zero state — shown only when the whole app is empty */
+.zero{
+  display:flex;flex-direction:column;align-items:flex-start;gap:14px;
+  padding:44px 0 20px;max-width:52ch;
+}
+.zero-t{font-size:17px;font-weight:600;letter-spacing:-.015em}
+.zero-line{padding:26px 0 6px;font-size:14px;color:var(--muted)}
+.zero-s{font-size:14px;color:var(--muted);line-height:1.6}
+::-webkit-calendar-picker-indicator:hover{opacity:.9}
+
+.seg{display:inline-flex;border:1px solid var(--rule-2);border-radius:7px;overflow:hidden}
+.seg button{font-size:13px;color:var(--muted);padding:7px 16px;transition:.15s;border-right:1px solid var(--rule-2)}
+.seg button:last-child{border-right:0}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+.prio-row{display:flex;gap:7px}
+.prio{font-size:12.5px;padding:8px 15px;border-radius:6px;border:1px solid var(--rule-2);color:var(--muted);transition:.15s}
+.prio:hover{color:var(--ink);border-color:#474340}
+.prio[aria-pressed="true"]{font-weight:600}
+.prio[aria-pressed="true"].high{color:var(--high);border-color:rgba(180,112,90,.5);background:rgba(180,112,90,.11)}
+.prio[aria-pressed="true"].med{color:var(--med);border-color:rgba(176,146,95,.5);background:rgba(176,146,95,.11)}
+.prio[aria-pressed="true"].low{color:var(--low);border-color:var(--accent-line);background:var(--accent-soft)}
+#f-mode .prio[aria-pressed="true"]{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft)}
+
+.editing-note{
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:9px 12px;
+  border-radius:8px;background:var(--accent-soft);border:1px solid var(--accent-line);
+  font-size:12.5px;color:var(--accent);
+}
+.editing-note b{font-weight:600}
+.editing-note .sp{flex:1}
+
+.form-foot{display:flex;align-items:center;gap:14px;margin-top:18px;padding-top:15px;border-top:1px solid var(--rule)}
+.form-foot .sp{flex:1}
+.form-err{font-size:12.5px;color:var(--high)}
+
+.filters{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:26px 0 4px}
+.fdiv{width:1px;height:15px;background:var(--rule-2);margin:0 3px}
+.pill{font-size:12px;padding:6px 10px;border-radius:6px;color:var(--muted);border:1px solid transparent;transition:.15s;white-space:nowrap}
+.pill:hover{color:var(--ink);background:var(--surface)}
+.pill[aria-pressed="true"]{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft);font-weight:500}
+.datechip{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 8px 6px 12px;border-radius:6px;color:var(--accent);border:1px solid var(--accent-line);background:var(--accent-soft)}
+.datechip button{display:grid;place-items:center;width:16px;height:16px;border-radius:4px;color:inherit}
+.datechip button:hover{background:rgba(255,255,255,.1)}
+.datechip svg{width:10px;height:10px}
+
+.brow{display:flex;align-items:flex-start;gap:12px;padding:11px 10px 11px 0;border-bottom:1px solid var(--rule);transition:background .15s;touch-action:manipulation}
+.brow:hover{background:rgba(255,255,255,.016)}
+.brow:last-child{border-bottom:0}
+.brow.done{opacity:.58}
+.brow.done .row-main{text-decoration:line-through;text-decoration-color:#7d766d;text-decoration-thickness:1px}
+.brow.done .row-title{color:var(--faint)}
+.act{width:26px;height:26px;flex:none;border-radius:5px;display:grid;place-items:center;color:var(--faint);transition:.15s;opacity:.4}
+.brow:hover .act,.act:focus-visible{opacity:1}
+.act:hover{background:var(--surface-2);color:var(--ink)}
+.act.del:hover{color:var(--high)}
+.act svg{width:14px;height:14px}
+
+/* carried-forward todo: green (just missed) sliding to red, then darker the
+   longer it's been ignored — colour comes from carryColor() in JS. */
+.carry-dot{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(0,0,0,.18)}
+
+/* ── calendar rail ───────────────────────────────────────── */
+.rail{position:sticky;top:34px}
+.cal-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.cal-month{font-size:13px;font-weight:500}
+.cal-nav{margin-left:auto;display:flex;gap:2px}
+.cal-btn{width:24px;height:24px;border-radius:5px;display:grid;place-items:center;color:var(--faint);transition:.15s}
+.cal-btn:hover{background:var(--surface);color:var(--ink)}
+.cal-btn svg{width:12px;height:12px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dow{font-size:10px;font-weight:600;color:var(--faint);text-align:center;padding-bottom:5px;letter-spacing:.04em}
+.cal-day{
+  position:relative;aspect-ratio:1;display:grid;place-items:center;border-radius:5px;
+  font-size:12px;color:var(--ink-2);transition:.13s;font-variant-numeric:tabular-nums;
+}
+.cal-day:hover{background:var(--surface-2);color:var(--ink)}
+.cal-day.out{color:#4e4a46}
+.cal-day.today{background:var(--accent);color:#1c1b1a;font-weight:600}
+.cal-day.sel{box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}
+.cal-dot{position:absolute;bottom:2.5px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--accent)}
+.cal-day.today .cal-dot{background:#1c1b1a}
+.cal-note{font-size:11.5px;color:var(--faint);margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translate(-50%,10px);
+  background:var(--surface-2);border:1px solid var(--rule-2);border-radius:7px;
+  padding:11px 16px;font-size:13px;box-shadow:0 12px 34px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;
+  display:flex;align-items:center;gap:10px;max-width:min(540px,90vw);
+}
+.toast::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);flex:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.bad::before{background:var(--high)}
+
+/* Touch (iPad finger, iPhone) at any width: full tap targets, 16px inputs,
+   controls not gated behind hover. A trackpad-equipped iPad keeps hover. */
+@media (hover: none) and (pointer: coarse){
+  input[type=text],input[type=date],input[type=time],textarea,.search input{font-size:16px}
+  .nav a{padding-top:12px;padding-bottom:12px}
+  .cb{width:20px;height:20px}
+  .cb svg{width:11px;height:11px}
+  .slot{width:24px;height:24px}
+  .act{width:38px;height:38px;opacity:.9}
+  .act svg{width:16px;height:16px}
+  .btn,.btn-primary{min-height:44px}
+  .iconbtn{width:40px;height:40px}
+  .pill{padding:8px 13px}
+  .prio,.lead{padding:10px 15px}
+  .seg button{padding-top:10px;padding-bottom:10px}
+  .cal-day{font-size:13.5px}
+  .cal-btn{width:30px;height:30px}
+  .tf-opt{padding:11px 12px;font-size:15px}
+}
+
+@media(max-width:1120px){.b-cols{grid-template-columns:minmax(0,1fr)}.rail{position:static;max-width:360px}}
+
+/* iPad portrait and narrow landscape: keep the sidebar, ease the content */
+@media (max-width:1000px) and (min-width:701px){
+  .wrap{padding:30px 28px 60px}
+  .head{flex-wrap:wrap;row-gap:14px}
+  .head-l{flex:1 1 100%}
+  .head-r{flex:1 1 100%;justify-content:flex-start}
+  .search{flex:1;max-width:none}
+  .form-grid{grid-template-columns:1fr 150px 130px}
+}
+@media (max-width:1000px){
+  .filters{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .pill,.fdiv,.datechip{flex:none}
+}
+
+/* ── phone ─────────────────────────────────────────────────
+   Bottom tab bar replaces the sidebar; inputs go to 16px so
+   iOS Safari stops zooming the page on focus; every tap
+   target clears 44px; safe-area insets keep clear of the
+   notch and the home indicator.
+   ──────────────────────────────────────────────────────── */
+.tabbar{display:none}
+
+@media(max-width:700px){
+  .sidebar{display:none}
+  .main{height:auto;flex:1}
+  body{display:block;overflow:visible}
+  .wrap{padding:calc(14px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom))}
+
+  /* sticky page header */
+  .head{
+    flex-direction:column;align-items:stretch;gap:12px;
+    position:sticky;top:0;z-index:20;margin:0 -16px;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    background:var(--bg);border-bottom:1px solid var(--rule);
+  }
+  .day{font-size:22px}
+  .head-r{width:100%;gap:8px}
+  .search{flex:1;width:auto}
+  .iconbtn{width:42px;height:42px}
+  .head-r .btn{min-height:42px}
+
+  /* 16px stops iOS auto-zoom on focus */
+  input[type=text],input[type=date],input[type=time],textarea,.search input{font-size:16px;padding:12px 13px}
+  .search input{padding-left:38px}
+  .form-grid{grid-template-columns:1fr;gap:14px}
+  .form-row{flex-direction:column;align-items:stretch;gap:14px}
+  .seg{width:100%}
+  .seg button{flex:1;padding:11px 6px;font-size:13px;text-align:center}
+  .switch-wrap{justify-content:space-between}
+  .prio,.lead{padding:11px 15px;font-size:13.5px}
+  .prio-row{flex-wrap:wrap}
+  .btn,.btn-primary{min-height:44px;padding:11px 18px}
+  #f-submit{width:100%;justify-content:center}
+
+  /* comfortable rows + real tap targets */
+  .row,.brow{padding-top:13px;padding-bottom:13px;gap:14px}
+  .row-title{font-size:15.5px}
+  .row-sub,.row-time{font-size:13px}
+  .slot{width:26px;height:26px;margin-top:1px}
+  .cb{width:22px;height:22px}
+  .cb svg{width:12px;height:12px}
+  .act{width:40px;height:40px;opacity:.75}
+  .act svg{width:17px;height:17px}
+  .row-side{gap:10px}
+
+  .filters{gap:8px;margin:20px 0 6px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+  .filters::-webkit-scrollbar{display:none}
+  .pill{padding:9px 14px;font-size:13px;flex:none}
+  .fdiv{flex:none}
+
+  .rail{max-width:none;margin-top:26px}
+  .cal-day{font-size:14px;border-radius:7px}
+  .tf-list{max-height:44vh}
+  .tf-opt{padding:11px 12px;font-size:15px}
+
+  .toast{bottom:calc(92px + env(safe-area-inset-bottom));width:calc(100% - 32px);max-width:none}
+
+  /* bottom tab bar */
+  .tabbar{
+    display:flex;align-items:stretch;position:fixed;left:0;right:0;bottom:0;z-index:40;
+    background:rgba(28,27,26,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border-top:1px solid var(--rule);padding-bottom:env(safe-area-inset-bottom);
+  }
+  .tab{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    padding:9px 4px 8px;min-height:54px;color:var(--faint);font-size:11px;font-weight:500;position:relative;
+  }
+  .tab svg{width:21px;height:21px}
+  .tab.active{color:var(--accent)}
+  .tab-n{
+    position:absolute;top:5px;left:50%;margin-left:7px;font-style:normal;
+    min-width:16px;height:16px;padding:0 4px;border-radius:99px;
+    background:var(--accent);color:#1c1b1a;font-size:10px;font-weight:700;
+    display:grid;place-items:center;
+  }
+  .tab-n:empty{display:none}
+  .tab-add{flex:0 0 64px;color:var(--accent)}
+  .tab-add svg{width:26px;height:26px}
+}
+
+@media(max-width:400px){
+  .seg button{padding:11px 2px;font-size:12px}
+  .day{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="2" y="2" width="28" height="28" rx="8" fill="#7d9b76"/>
+      <path d="M9.5 16.5 14 21l8.5-9" stroke="#1c1b1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>Planit</span>
+  </div>
+
+  <nav class="nav">
+    <a href="#/today" data-nav="today">Today <span class="n tnum" id="nav-today-n"></span></a>
+    <a href="#/backlog" data-nav="backlog">Backlog <span class="n tnum" id="nav-backlog-n"></span></a>
+  </nav>
+
+  <div class="side-lbl">Open</div>
+  <div class="side-stat"><span class="d" style="background:var(--accent)"></span>Events<span class="n tnum" id="leg-event">0</span></div>
+  <div class="side-stat"><span class="d" style="background:var(--high)"></span>Tasks<span class="n tnum" id="leg-todo">0</span></div>
+  <div class="side-stat"><span class="d" style="background:var(--look)"></span>Look out<span class="n tnum" id="leg-lookout">0</span></div>
+
+  <div class="side-foot">
+    <div class="user">
+      <div class="avatar">GK</div>
+      <div class="user-meta">
+        <div class="user-name">Gokul</div>
+        <div class="user-mail" title="gokulkumbakkara@gmail.com">gokulkumbakkara@gmail.com</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main scroll">
+  <!-- ── TODAY ── -->
+  <section class="view wrap" id="view-today">
+    <div class="head">
+      <div class="head-l">
+        <h1 class="day" id="d-day">—</h1>
+        <div class="day-sub" id="d-next">—</div>
+      </div>
+      <div class="head-r">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input type="search" id="q" placeholder="Search" aria-label="Search items">
+        </div>
+        <a class="btn" href="#/backlog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Add
+        </a>
+      </div>
+    </div>
+
+    <div class="prog"><i id="d-bar"></i></div>
+    <div class="prog-lbl tnum" id="d-count">0 of 0 done</div>
+
+    <div class="zero" id="today-zero" hidden>
+      <div class="zero-t">Nothing here yet</div>
+      <div class="zero-s">Add an event, a task, or something to look out for. It shows up here on the day it's due — no notifications, just check in.</div>
+      <a class="btn btn-primary" href="#/backlog">Add your first item</a>
+    </div>
+
+    <div id="today-groups">
+    <div class="zero-line" id="today-none" hidden>Nothing scheduled today.</div>
+    <div id="today-types">
+    <div class="grp">
+      <div class="grp-lbl">Events <span class="n tnum" id="n-event"></span><span class="rule"></span></div>
+      <div id="col-event"></div>
+    </div>
+    <div class="grp" id="grp-todo">
+      <div class="grp-lbl">Tasks <span class="n tnum" id="n-todo"></span><span class="rule"></span></div>
+      <div id="col-todo"></div>
+    </div>
+    </div>
+    <div class="grp" id="grp-lookout">
+      <div class="grp-lbl">Look out <span class="n tnum" id="n-lookout"></span><span class="rule"></span></div>
+      <div id="col-lookout"></div>
+    </div>
+    <div class="grp">
+      <div class="grp-lbl"><span id="soon-lbl">Next three days</span> <span class="n tnum" id="n-soon"></span><span class="rule"></span></div>
+      <div id="col-soon"></div>
+    </div>
+    </div>
+  </section>
+
+  <!-- ── BACKLOG ── -->
+  <section class="view wrap" id="view-backlog">
+    <div class="head">
+      <div class="head-l">
+        <h1 class="day">Backlog</h1>
+        <div class="day-sub" id="b-sub">—</div>
+      </div>
+      <div class="head-r">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input type="search" id="q2" placeholder="Search" aria-label="Search items">
+        </div>
+      </div>
+    </div>
+
+    <div class="b-cols">
+      <div>
+        <form class="form" id="form" autocomplete="off">
+          <div class="editing-note" id="edit-note" hidden>
+            <span>Editing <b id="edit-title"></b></span>
+            <span class="sp"></span>
+            <button type="button" class="btn btn-quiet" id="edit-cancel">Cancel</button>
+          </div>
+          <div class="form-row">
+            <div class="seg" id="f-type">
+              <button type="button" data-type="event">Event</button>
+              <button type="button" data-type="todo">Task</button>
+              <button type="button" data-type="lookout">Look out</button>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label class="lbl" for="f-title">Title</label>
+              <input type="text" id="f-title" placeholder="What needs to happen?" maxlength="500" required>
+            </div>
+            <div class="field">
+              <label class="lbl" for="f-date">
+                <span id="f-date-lbl">Date</span>
+                <button type="button" class="lnk" id="f-range-toggle">+ range</button>
+              </label>
+              <input type="date" id="f-date" required>
+            </div>
+            <div class="field" id="f-end-wrap" hidden>
+              <label class="lbl" for="f-end">Until</label>
+              <input type="date" id="f-end">
+            </div>
+            <div class="field wide" id="f-mode-wrap" hidden>
+              <span class="lbl">Across those dates</span>
+              <div class="prio-row" id="f-mode">
+                <button type="button" class="prio" data-mode="window">One day, not fixed yet</button>
+                <button type="button" class="prio" data-mode="daily">Every day</button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="lbl" for="f-time">Time</label>
+              <div class="tf">
+                <input type="text" id="f-time" placeholder="Optional" autocomplete="off"
+                       role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="tf-list">
+                <button type="button" class="tf-clear" id="tf-clear" aria-label="Clear time" hidden>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+                <div class="tf-pop" id="tf-pop" hidden><div class="tf-list" id="tf-list" role="listbox" aria-label="Times"></div></div>
+              </div>
+            </div>
+            <div class="field wide">
+              <label class="lbl" for="f-note">Note</label>
+              <textarea id="f-note" rows="2" maxlength="2000" placeholder="Add a note…"></textarea>
+            </div>
+            <div class="field" id="f-prio-wrap" hidden>
+              <span class="lbl">Priority</span>
+              <div class="prio-row" id="f-prio">
+                <button type="button" class="prio high" data-prio="high">High</button>
+                <button type="button" class="prio med" data-prio="med">Med</button>
+                <button type="button" class="prio low" data-prio="low">Low</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-foot">
+            <div class="form-err" id="f-err"></div>
+            <div class="sp"></div>
+            <button type="submit" class="btn btn-primary" id="f-submit">Add item</button>
+          </div>
+        </form>
+
+        <div class="filters">
+          <button class="pill" data-tf="all">All</button>
+          <button class="pill" data-tf="event">Events</button>
+          <button class="pill" data-tf="todo">Tasks</button>
+          <button class="pill" data-tf="lookout">Look out</button>
+          <span class="fdiv"></span>
+          <button class="pill" data-sf="all">Any status</button>
+          <button class="pill" data-sf="upcoming">Open</button>
+          <button class="pill" data-sf="done">Done</button>
+          <span class="fdiv"></span>
+          <button class="pill" data-rf="next3">Next 3 days</button>
+          <button class="pill" data-rf="week">This week</button>
+          <button class="pill" data-rf="month">This month</button>
+          <span class="datechip" id="datechip" hidden>
+            <span id="datechip-txt"></span>
+            <button type="button" id="datechip-x" aria-label="Clear date filter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </span>
+        </div>
+
+        <div id="b-list"></div>
+      </div>
+
+      <aside class="rail">
+        <div class="cal-head">
+          <span class="cal-month" id="cal-month">—</span>
+          <span class="cal-nav">
+            <button class="cal-btn" id="cal-prev" aria-label="Previous month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+            <button class="cal-btn" id="cal-next" aria-label="Next month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+          </span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-note">Dotted days have items. Click one to filter the list.</div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <a href="#/today" data-nav="today" class="tab">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>
+    </svg>
+    <span>Today</span>
+    <i class="tab-n tnum" id="tab-today-n"></i>
+  </a>
+  <button class="tab tab-add" id="tab-add" aria-label="Add item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+  <a href="#/backlog" data-nav="backlog" class="tab">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>
+    </svg>
+    <span>Backlog</span>
+    <i class="tab-n tnum" id="tab-backlog-n"></i>
+  </a>
+</nav>
+
+<div class="toast" id="toast"><span></span></div>
+
+<script>
+(() => {
+'use strict';
+
+const IST = 'Asia/Kolkata';
+const TYPES = ['event', 'todo'];      // every day-bound kind
+const TODAY_TYPES = ['event', 'todo']; // a task appears here only on the date it carries
+const PRIO_RANK = { high: 0, med: 1, low: 2 };
+const LABEL = { event: 'Event', todo: 'Task', lookout: 'Look-out' };
+// Types that can be captured now and scheduled later.
+const DATELESS_OK = new Set(['lookout', 'todo']);
+// Priority means importance, not urgency, so it applies wherever the concept
+// of "how much this matters" is meaningful — tasks and open loops, not
+// appointments (an event doesn't get more or less important by being tagged).
+const PRIORITIZED = new Set(['todo', 'lookout']);
+
+const $ = (sel) => document.querySelector(sel);
+
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === 'class') n.className = v;
+    else if (k === 'text') n.textContent = v;
+    else if (k === 'svg') n.innerHTML = v;                 // trusted, literal markup only
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v === true ? '' : String(v));
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return n;
+}
+
+const S = (d, w = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#1c1b1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+const X_SVG = S('<path d="M18 6 6 18M6 6l12 12"/>', 2.2);
+const DONE_SVG = S('<path d="M20 6 9 17l-5-5"/>', 2.4);
+const UNDO_SVG = S('<path d="M3 7v6h6"/><path d="M3.5 13a9 9 0 1 0 2.3-6.4L3 9"/>', 2);
+
+/* ── dates (all IST) ─────────────────────────────────────── */
+
+const ISO_FMT = new Intl.DateTimeFormat('en-CA', { timeZone: IST, year: 'numeric', month: '2-digit', day: '2-digit' });
+const CLOCK_FMT = new Intl.DateTimeFormat('en-GB', { timeZone: IST, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+
+const todayISO = () => ISO_FMT.format(new Date());
+const pad = (v) => String(v).padStart(2, '0');
+
+function shiftISO(iso, days) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
+const daysFrom = (a, b) => Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000);
+
+/** Format an ISO date without letting the viewer's zone shift the day. */
+const fmtDate = (iso, opts) =>
+  new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', ...opts }).format(new Date(iso + 'T12:00:00Z'));
+
+function fmtTime(hhmm) {
+  if (!hhmm) return '';
+  const [h, m] = hhmm.split(':').map(Number);
+  return `${h % 12 || 12}:${pad(m)} ${h < 12 ? 'am' : 'pm'}`;
+}
+
+function istNowMinutes() {
+  const [h, m] = CLOCK_FMT.format(new Date()).split(':').map(Number);
+  return (h % 24) * 60 + m;
+}
+
+const relDay = (iso, today) => (daysFrom(today, iso) === 1 ? 'tomorrow' : `in ${daysFrom(today, iso)} days`);
+
+/**
+ * Colour for a todo carried forward `days` past its date — green (just
+ * missed) sliding through amber to red, then darkening further the longer
+ * it's been ignored. Interpolates through the app's own tokens rather than
+ * introducing a new palette.
+ */
+function carryColor(days) {
+  const LOW = [0x93, 0xb5, 0x8a], MED = [0xcd, 0xa8, 0x6a], HIGH = [0xd0, 0x84, 0x69], DARK = [0x54, 0x22, 0x1c];
+  const lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * Math.max(0, Math.min(1, t))));
+  const rgb = days <= 3 ? lerp(LOW, MED, (days - 1) / 2)
+    : days <= 6 ? lerp(MED, HIGH, (days - 3) / 3)
+    : lerp(HIGH, DARK, (days - 6) / 6);
+  return '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+
+function groupHeading(iso, today) {
+  const n = daysFrom(today, iso);
+  if (n === 0) return 'Today';
+  if (n === 1) return 'Tomorrow';
+  if (n === -1) return 'Yesterday';
+  return fmtDate(iso, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+/**
+ * Inclusive [from, to] ISO bounds for a backlog range filter.
+ *   next3 — rolling: today through today+3
+ *   week  — the calendar week containing today, Monday to Sunday
+ *   month — the calendar month containing today
+ */
+function rangeBounds(range, today) {
+  if (range === 'next3') return [today, shiftISO(today, 3)];
+
+  if (range === 'week') {
+    const dow = (new Date(today + 'T00:00:00Z').getUTCDay() + 6) % 7;   // Mon = 0
+    const start = shiftISO(today, -dow);
+    return [start, shiftISO(start, 6)];
+  }
+
+  if (range === 'month') {
+    const [y, m] = today.split('-').map(Number);
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();           // day 0 of next month
+    return [`${y}-${pad(m)}-01`, `${y}-${pad(m)}-${pad(lastDay)}`];
+  }
+
+  return null;
+}
+
+/* ── time field ──────────────────────────────────────────────
+   Chrome's native <input type="time"> opens a system popup that
+   cannot be themed — it renders bright blue over this palette.
+   This is a plain text input plus our own list, so it matches.
+   Accepts "9", "930", "9:30", "9:30pm", "21:30".
+   ──────────────────────────────────────────────────────────── */
+
+function parseTimeInput(raw) {
+  const t = String(raw).trim().toLowerCase().replace(/[\s.]/g, '');
+  if (!t) return null;
+
+  const m = t.match(/^(\d{1,2})(?::?(\d{2}))?(am|pm|a|p)?$/);
+  if (!m) return null;
+
+  let h = Number(m[1]);
+  const min = m[2] ? Number(m[2]) : 0;
+  const ap = m[3] ? m[3][0] : null;
+  if (min > 59) return null;
+
+  if (ap) {
+    if (h < 1 || h > 12) return null;
+    h = (h % 12) + (ap === 'p' ? 12 : 0);
+  } else if (h > 23) return null;
+
+  return `${pad(h)}:${pad(min)}`;
+}
+
+const TIME_SLOTS = Array.from({ length: 96 }, (_, i) => `${pad(Math.floor(i / 4))}:${pad((i % 4) * 15)}`);
+
+const timeField = {
+  value: null,        // canonical 'HH:MM' or null
+  open: false,
+  hl: -1,             // highlighted option index
+  opts: [],
+
+  get input() { return $('#f-time'); },
+
+  set(v) {
+    this.value = v;
+    this.input.value = v ? fmtTime(v) : '';
+    $('#tf-clear').hidden = !v;
+    if (typeof syncForm === 'function') syncForm();   // the 05:30 note depends on the time
+  },
+
+  show(filter) {
+    const list = $('#tf-list');
+    const q = (filter || '').trim().toLowerCase().replace(/[\s.]/g, '');
+    this.opts = q
+      ? TIME_SLOTS.filter((v) => v.replace(':', '').startsWith(q.replace(':', '')) || fmtTime(v).replace(/[\s:]/g, '').startsWith(q.replace(':', '')))
+      : TIME_SLOTS.slice();
+    if (!this.opts.length) this.opts = TIME_SLOTS.slice();
+
+    list.replaceChildren();
+    this.opts.forEach((v, i) => list.append(el('button', {
+      class: 'tf-opt' + (v === this.value ? ' on' : '') + (i === this.hl ? ' hl' : ''),
+      type: 'button', role: 'option',
+      'aria-selected': String(v === this.value),
+      text: fmtTime(v),
+      onmousedown: (e) => e.preventDefault(),      // keep focus so blur doesn't close first
+      onclick: () => { this.set(v); this.close(); },
+    })));
+
+    $('#tf-pop').hidden = false;
+    this.input.setAttribute('aria-expanded', 'true');
+    this.open = true;
+
+    // Scroll the current (or 9am) row into view.
+    const idx = this.hl >= 0 ? this.hl : Math.max(0, this.opts.indexOf(this.value || '09:00'));
+    const row = list.children[idx];
+    if (row) list.scrollTop = row.offsetTop - 70;
+  },
+
+  close() {
+    $('#tf-pop').hidden = true;
+    this.input.setAttribute('aria-expanded', 'false');
+    this.open = false;
+    this.hl = -1;
+  },
+
+  move(d) {
+    if (!this.open) { this.show(this.input.value); return; }
+    this.hl = Math.max(0, Math.min(this.opts.length - 1, this.hl < 0 ? 0 : this.hl + d));
+    this.show(this.input.value);
+  },
+
+  commit() {
+    const parsed = parseTimeInput(this.input.value);
+    this.set(parsed);                                // null clears; otherwise normalise the display
+  },
+};
+
+function wireTimeField() {
+  const inp = timeField.input;
+
+  inp.addEventListener('focus', () => timeField.show(''));
+  inp.addEventListener('input', () => { timeField.hl = -1; timeField.show(inp.value); });
+
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); timeField.move(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); timeField.move(-1); }
+    else if (e.key === 'Escape') { if (timeField.open) { e.stopPropagation(); timeField.close(); } }
+    else if (e.key === 'Enter') {
+      if (timeField.open) {
+        e.preventDefault();
+        if (timeField.hl >= 0) timeField.set(timeField.opts[timeField.hl]);
+        else timeField.commit();
+        timeField.close();
+      }
+    }
+  });
+
+  inp.addEventListener('blur', () => { timeField.commit(); timeField.close(); });
+
+  $('#tf-clear').addEventListener('mousedown', (e) => e.preventDefault());
+  $('#tf-clear').addEventListener('click', () => { timeField.set(null); timeField.close(); inp.focus(); });
+
+  document.addEventListener('click', (e) => {
+    if (timeField.open && !e.target.closest('.tf')) timeField.close();
+  });
+}
+
+/* ── state ───────────────────────────────────────────────── */
+
+const state = {
+  items: [],
+  query: '',
+  calMonth: todayISO().slice(0, 7),
+  form: { type: 'event', priority: null, range: false, daily: false, dateTouched: false },
+  editing: null,        // id of the item currently open in the form, if any
+  filters: { types: new Set(), status: 'all', range: null, date: null },
+};
+
+const matchesQuery = (i) => {
+  const q = state.query.trim().toLowerCase();
+  if (!q) return true;
+  return i.title.toLowerCase().includes(q) || (i.note || '').toLowerCase().includes(q);
+};
+
+/** "14 – 18 Sept" for a multi-day item. */
+function rangeText(item) {
+  if (!item.end_date || !item.date) return null;
+  const sameMonth = item.date.slice(0, 7) === item.end_date.slice(0, 7);
+  const a = fmtDate(item.date, sameMonth ? { day: 'numeric' } : { day: 'numeric', month: 'short' });
+  const b = fmtDate(item.end_date, { day: 'numeric', month: 'short' });
+  return `${a} – ${b}`;
+}
+
+/**
+ * How a range reads on a row: a repeating programme says which day you are on,
+ * an unsettled window just gives the span.
+ */
+function rangeLabel(item, today) {
+  const span = rangeText(item);
+  if (!span) return null;
+  if (!item.daily) return `any day ${span}`;
+
+  const total = daysFrom(item.date, item.end_date) + 1;
+  const nth = daysFrom(item.date, today) + 1;
+  return nth >= 1 && nth <= total ? `every day ${span} · day ${nth} of ${total}` : `every day ${span}`;
+}
+
+/** True while today falls inside an item's window (or is its exact day). */
+const coversToday = (i, today) =>
+  Boolean(i.date) && (i.date === today || (i.end_date && today >= i.date && today <= i.end_date));
+
+/** Human label for a look-out item's due date: overdue / today / in N days. */
+function dueLabel(iso, today) {
+  if (!iso) return null;
+  const n = daysFrom(today, iso);
+  if (n < 0) return { text: `${-n} day${n === -1 ? '' : 's'} overdue`, overdue: true };
+  if (n === 0) return { text: 'due today', overdue: true };
+  if (n === 1) return { text: 'due tomorrow', overdue: false };
+  return { text: `due in ${n} days`, overdue: false };
+}
+
+/* ── api ─────────────────────────────────────────────────── */
+
+async function api(path, options) {
+  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+let toastTimer;
+function toast(msg, bad) {
+  const t = $('#toast');
+  t.querySelector('span').textContent = msg;
+  t.classList.toggle('bad', Boolean(bad));
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
+}
+
+async function refresh() {
+  state.items = await api('/api/items');
+  render();
+}
+
+/* ── sorting ─────────────────────────────────────────────── */
+
+const byTime = (a, b) => (a.time || '99:99').localeCompare(b.time || '99:99') || a.id - b.id;
+
+/**
+ * Undone before done; then, per item, a set time is a stronger commitment
+ * than a priority tag, so anything with a time sorts chronologically among
+ * itself — otherwise priority (high → low) decides. One rule, used wherever
+ * tasks are ordered, so carried-forward and today's tasks land in a single
+ * consistent order instead of two lists stuck together.
+ */
+function compareTaskish(a, b) {
+  if (a.done !== b.done) return a.done - b.done;
+  const aHasTime = Boolean(a.time), bHasTime = Boolean(b.time);
+  if (aHasTime !== bHasTime) return aHasTime ? -1 : 1;
+  if (aHasTime) return byTime(a, b);
+  return (PRIO_RANK[a.priority] ?? 3) - (PRIO_RANK[b.priority] ?? 3) || a.id - b.id;
+}
+
+function sortForColumn(list, type) {
+  const arr = list.slice();
+  if (type === 'event') return arr.sort(byTime);
+  return arr.sort(compareTaskish);
+}
+
+/* ── mutations ───────────────────────────────────────────── */
+
+async function toggleDone(item) {
+  const next = item.done ? 0 : 1;
+  item.done = next;               // optimistic — the row strikes through immediately
+  render();
+  try {
+    await api(`/api/items/${item.id}`, { method: 'PUT', body: JSON.stringify({ done: next }) });
+    await refresh();
+  } catch (err) {
+    item.done = next ? 0 : 1;
+    render();
+    toast(err.message, true);
+  }
+}
+
+async function removeItem(item) {
+  state.items = state.items.filter((i) => i.id !== item.id);   // gone from the list at once
+  render();
+  try {
+    await api(`/api/items/${item.id}`, { method: 'DELETE' });
+    await refresh();
+    toast('Item deleted');
+  } catch (err) {
+    toast(err.message, true);
+    await refresh();
+  }
+}
+
+/* ── shared pieces ───────────────────────────────────────── */
+
+/** Events get a static pip; tasks get a dot that is the checkbox. */
+function marker(item) {
+  if (item.type === 'event') return el('span', { class: 'slot' }, el('span', { class: 'pip' }));
+  return el('span', { class: 'slot' }, el('button', {
+    class: 'cb' + (item.type === 'todo' ? ' sq' : ''),
+    type: 'button', role: 'checkbox',
+    'aria-checked': item.done ? 'true' : 'false',
+    'aria-label': item.title,
+    svg: CHECK,
+    onclick: () => toggleDone(item),
+  }));
+}
+
+const prioTag = (item) => (PRIORITIZED.has(item.type) && item.priority
+  ? el('span', { class: `pr ${item.priority}`, text: item.priority })
+  : null);
+
+/** A look-out row: title, optional note, and its due state (or "no date"). */
+/**
+ * Edit is reached by gesture, not a visible button, so a plain scan of a row
+ * stays uncluttered: double-click on a laptop, double-tap on iPhone/iPad.
+ * A click that lands on an actual control (checkbox, an action button in
+ * Backlog) is left alone so it can do its own job.
+ */
+function bindEditGesture(rowEl, item) {
+  const isControl = (e) => e.target.closest('button, input, textarea, a');
+
+  rowEl.addEventListener('dblclick', (e) => {
+    if (isControl(e)) return;
+    loadForEdit(item);
+  });
+
+  let lastTap = 0, lastX = 0, lastY = 0;
+  rowEl.addEventListener('touchend', (e) => {
+    if (isControl(e)) return;
+    const t = e.changedTouches[0];
+    const now = Date.now();
+    const closeEnough = Math.abs(t.clientX - lastX) < 30 && Math.abs(t.clientY - lastY) < 30;
+    if (now - lastTap < 350 && closeEnough) {
+      e.preventDefault();
+      lastTap = 0;
+      loadForEdit(item);
+    } else {
+      lastTap = now; lastX = t.clientX; lastY = t.clientY;
+    }
+  }, { passive: false });
+
+  return rowEl;
+}
+
+function lookoutRow(item, today) {
+  const due = dueLabel(item.date, today);
+  return bindEditGesture(el('div', { class: 'row' + (item.done ? ' done' : '') },
+    marker(item),
+    el('div', { class: 'row-main' },
+      el('div', { class: 'row-title', text: item.title }),
+      item.note ? el('div', { class: 'row-sub', text: item.note }) : null,
+    ),
+    el('div', { class: 'row-side' },
+      prioTag(item),
+      due
+        ? el('span', { class: 'pr ' + (due.overdue ? 'overdue' : 'look'), text: due.text })
+        : el('span', { class: 'row-time', text: 'no date' }),
+    ),
+  ), item);
+}
+
+function dayRow(item, today) {
+  const overdueDays = item.type === 'todo' && item.date && item.date < today ? daysFrom(item.date, today) : 0;
+  // The carry-dot's colour + tooltip already say how overdue this is —
+  // no need to repeat "since <date>" in the note line too.
+  const sub = [rangeLabel(item, today), item.note || null].filter(Boolean).join('  ·  ');
+
+  return bindEditGesture(el('div', { class: 'row' + (item.done ? ' done' : '') },
+    marker(item),
+    el('div', { class: 'row-main' },
+      el('div', { class: 'row-title', text: item.title }),
+      sub ? el('div', { class: 'row-sub', text: sub }) : null,
+    ),
+    el('div', { class: 'row-side' },
+      overdueDays ? el('span', {
+        class: 'carry-dot',
+        style: `background:${carryColor(overdueDays)}`,
+        title: `Carried forward ${overdueDays} day${overdueDays === 1 ? '' : 's'} — was due ${fmtDate(item.date, { weekday: 'long', day: 'numeric', month: 'long' })}`,
+      }) : null,
+      prioTag(item),
+      item.time ? el('span', { class: 'row-time', text: fmtTime(item.time) }) : null,
+    ),
+  ), item);
+}
+
+function soonRow(item, today) {
+  return bindEditGesture(el('div', { class: 'row' + (item.done ? ' done' : '') },
+    marker(item),
+    el('div', { class: 'row-main' },
+      el('div', { class: 'row-title', text: item.title }),
+      el('div', { class: 'row-sub', text: (rangeLabel(item, today) || fmtDate(item.date, { weekday: 'long', day: 'numeric', month: 'short' })) + (item.time ? ` · ${fmtTime(item.time)}` : '') }),
+    ),
+    el('div', { class: 'row-side' },
+      prioTag(item),
+      el('span', { class: 'rel', text: relDay(item.date, today) }),
+    ),
+  ), item);
+}
+
+/* ── today ───────────────────────────────────────────────── */
+
+function renderToday() {
+  const today = todayISO();
+  const horizon = shiftISO(today, 3);
+
+  const visible = state.items.filter(matchesQuery);
+  // Day-bound kinds. A todo with no date simply never matches a day, so it
+  // stays in the backlog until you give it one.
+  const dayBound = visible.filter((i) => TODAY_TYPES.includes(i.type));
+  const todays = dayBound.filter((i) => coversToday(i, today));
+
+  // A todo you didn't finish doesn't vanish once its date passes — it carries
+  // forward onto Today until you either do it or delete it. Left unsorted
+  // here on purpose: it's merged with today's tasks below and sorted once,
+  // as one list, rather than as two blocks stuck together.
+  const overdueTodos = visible
+    .filter((i) => i.type === 'todo' && !i.done && i.date && i.date < today && !coversToday(i, today));
+
+  // Everything ahead of today, nearest first.
+  const future = dayBound
+    .filter((i) => i.date && i.date > today && !coversToday(i, today))
+    .sort((a, b) => a.date.localeCompare(b.date) || byTime(a, b));
+
+  // Normally the next three days — but if that window is empty and there is
+  // still work further out, show the next few rather than an empty section.
+  const within3 = future.filter((i) => i.date <= horizon);
+  const soon = within3.length ? within3 : future.slice(0, 5);
+  const soonLabel = within3.length ? 'Next three days' : 'Coming up';
+
+  $('#d-day').textContent = fmtDate(today, { weekday: 'long', day: 'numeric', month: 'long' });
+
+  // Next up: today's events that carry a time and are still ahead.
+  const now = istNowMinutes();
+  const ahead = todays
+    .filter((i) => i.time && i.type !== 'todo' && !i.done)
+    .map((i) => ({ i, at: Number(i.time.slice(0, 2)) * 60 + Number(i.time.slice(3, 5)) }))
+    .filter((x) => x.at > now)
+    .sort((a, b) => a.at - b.at);
+
+  const sub = $('#d-next');
+  sub.replaceChildren();
+  if (ahead.length) {
+    const mins = ahead[0].at - now;
+    const label = mins < 60 ? `${mins} minutes` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
+    sub.append(ahead[0].i.title, ' in ', el('b', { text: label }));
+  } else {
+    sub.textContent = todays.length ? 'Nothing else scheduled today' : 'Nothing scheduled today';
+  }
+
+  // Completion counts tasks only; events have no done concept.
+  // Carried-forward todos count too — they're still outstanding work.
+  const countable = todays.filter((i) => i.type !== 'event').concat(overdueTodos);
+  const done = countable.filter((i) => i.done).length;
+  const pct = countable.length ? Math.round((done / countable.length) * 100) : 0;
+  $('#d-bar').style.width = `${pct}%`;
+  $('#d-count').textContent = `${done} of ${countable.length} done`;
+
+  for (const type of TODAY_TYPES) {
+    const host = $('#col-' + type);
+    host.replaceChildren();
+
+    const mine = type === 'todo'
+      ? sortForColumn(overdueTodos.concat(todays.filter((i) => i.type === type)), type)
+      : sortForColumn(todays.filter((i) => i.type === type), type);
+    const open = mine.filter((i) => !i.done).length;
+    $('#n-' + type).textContent = mine.length ? (type === 'event' ? String(mine.length) : `${open} open`) : '';
+
+    if (mine.length) mine.forEach((i) => host.append(dayRow(i, today)));
+    else host.append(el('div', { class: 'empty', text: 'Nothing scheduled' }));
+
+    // Events always keep their heading; Tasks only earns one
+    // when something is actually due today.
+    if (type === 'todo') $('#grp-todo').hidden = mine.length === 0;
+  }
+
+  // Sidebar overview still counts every kind, including the ones not shown here.
+  for (const type of [...TYPES, 'lookout']) {
+    $('#leg-' + type).textContent = String(state.items.filter((i) => i.type === type && !i.done).length);
+  }
+
+  // Look out — open loops. Not day-bound, so every open one shows, soonest due
+  // first and undated last.
+  const lookouts = visible
+    .filter((i) => i.type === 'lookout' && !i.done)
+    .sort((a, b) =>
+      (a.date ? 0 : 1) - (b.date ? 0 : 1) ||                          // dated before undated
+      (a.date || '').localeCompare(b.date || '') ||                    // soonest due first
+      (PRIO_RANK[a.priority] ?? 3) - (PRIO_RANK[b.priority] ?? 3) ||   // tie-break: more important first
+      a.id - b.id);
+
+  const lookHost = $('#col-lookout');
+  lookHost.replaceChildren();
+  $('#n-lookout').textContent = lookouts.length ? String(lookouts.length) : '';
+  lookouts.forEach((i) => lookHost.append(lookoutRow(i, today)));
+  $('#grp-lookout').hidden = lookouts.length === 0;   // only earns space when in use
+
+  const soonHost = $('#col-soon');
+  soonHost.replaceChildren();
+  $('#soon-lbl').textContent = soonLabel;
+  $('#n-soon').textContent = soon.length ? String(soon.length) : '';
+  if (soon.length) soon.forEach((i) => soonHost.append(soonRow(i, today)));
+  else soonHost.append(el('div', { class: 'empty', text: 'Nothing coming up' }));
+
+  // A brand-new, empty app gets one clear prompt instead of four "Nothing scheduled" lines.
+  const bare = state.items.length === 0;
+  $('#today-zero').hidden = !bare;
+  $('#today-groups').hidden = bare;
+
+  // Nothing today but work further out: one quiet line beats three empty groups.
+  const clearToday = !bare && todays.length === 0 && overdueTodos.length === 0;
+  $('#today-types').hidden = clearToday;
+  $('#today-none').hidden = !clearToday;
+
+  // The progress bar is meaningless with nothing to complete.
+  const hasCountable = countable.length > 0;
+  $('.prog').hidden = !hasCountable;
+  $('#d-count').hidden = !hasCountable;
+
+  const openToday = countable.length ? countable.length - done : 0;
+  const openAll = state.items.filter((i) => i.type !== 'event' && !i.done).length;
+  $('#nav-today-n').textContent = openToday ? String(openToday) : '';
+  $('#nav-backlog-n').textContent = String(openAll);
+  $('#tab-today-n').textContent = openToday ? String(openToday) : '';
+  $('#tab-backlog-n').textContent = openAll ? String(openAll) : '';
+
+  renderCalendar(today);
+}
+
+/* ── calendar rail ───────────────────────────────────────── */
+
+function renderCalendar(today) {
+  const [y, m] = state.calMonth.split('-').map(Number);
+  const first = `${y}-${pad(m)}-01`;
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const lead = (new Date(first + 'T00:00:00Z').getUTCDay() + 6) % 7;    // Monday-first
+
+  $('#cal-month').textContent = fmtDate(first, { month: 'long', year: 'numeric' });
+
+  const marked = new Set(state.items.map((i) => i.date));
+  const grid = $('#cal-grid');
+  grid.replaceChildren();
+
+  for (const d of ['M', 'T', 'W', 'T', 'F', 'S', 'S']) grid.append(el('div', { class: 'cal-dow', text: d }));
+
+  const prevDays = new Date(Date.UTC(y, m - 1, 0)).getUTCDate();
+  for (let i = lead; i > 0; i--) grid.append(el('div', { class: 'cal-day out', text: String(prevDays - i + 1) }));
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = `${y}-${pad(m)}-${pad(d)}`;
+    const cls = ['cal-day'];
+    if (iso === today) cls.push('today');
+    if (iso === state.filters.date) cls.push('sel');
+
+    grid.append(el('button', {
+      class: cls.join(' '),
+      type: 'button',
+      title: fmtDate(iso, { weekday: 'long', day: 'numeric', month: 'long' }),
+      onclick: () => {
+        state.filters.date = state.filters.date === iso ? null : iso;
+        renderBacklog();
+        renderCalendar(todayISO());
+        if (state.filters.date) location.hash = '#/backlog';
+      },
+    }, String(d), marked.has(iso) ? el('span', { class: 'cal-dot' }) : null));
+  }
+
+  const trail = (7 - ((lead + daysInMonth) % 7)) % 7;
+  for (let d = 1; d <= trail; d++) grid.append(el('div', { class: 'cal-day out', text: String(d) }));
+}
+
+/* ── backlog ─────────────────────────────────────────────── */
+
+function backlogRow(item, today) {
+  const rel = item.date && item.date > today && daysFrom(today, item.date) <= 3 ? relDay(item.date, today) : null;
+  const overdueDays = item.type === 'todo' && item.date && item.date < today && !item.done ? daysFrom(item.date, today) : 0;
+  const meta = [
+    rangeLabel(item, today),
+    item.time ? fmtTime(item.time) : null,
+    item.note || null,
+  ].filter(Boolean);
+
+  return bindEditGesture(el('div', { class: 'brow' + (item.done ? ' done' : '') },
+    marker(item),
+    el('div', { class: 'row-main' },
+      el('div', { class: 'row-title', text: item.title }),
+      meta.length ? el('div', { class: 'row-sub', text: meta.join('  ·  ') }) : null,
+    ),
+    el('div', { class: 'row-side' },
+      overdueDays ? el('span', {
+        class: 'carry-dot',
+        style: `background:${carryColor(overdueDays)}`,
+        title: `Carried forward ${overdueDays} day${overdueDays === 1 ? '' : 's'} — was due ${fmtDate(item.date, { weekday: 'long', day: 'numeric', month: 'long' })}`,
+      }) : null,
+      prioTag(item),
+      rel ? el('span', { class: 'rel', text: rel }) : null,
+      el('button', {
+        class: 'act', type: 'button',
+        title: item.done ? 'Mark not done' : 'Mark done',
+        'aria-label': item.done ? 'Mark not done' : 'Mark done',
+        svg: item.done ? UNDO_SVG : DONE_SVG,
+        onclick: () => toggleDone(item),
+      }),
+      el('button', {
+        class: 'act del', type: 'button', title: 'Delete', 'aria-label': 'Delete',
+        svg: X_SVG,
+        onclick: () => removeItem(item),
+      }),
+    ),
+  ), item);
+}
+
+function renderBacklog() {
+  const today = todayISO();
+  const { types, status, range, date } = state.filters;
+  const bounds = rangeBounds(range, today);
+
+  const shown = state.items.filter((i) => {
+    if (!matchesQuery(i)) return false;
+    if (types.size && !types.has(i.type)) return false;
+    if (status === 'done' && !i.done) return false;
+    if (status === 'upcoming' && (i.done || i.date < today)) return false;
+    if (date && i.date !== date) return false;
+    if (bounds && (i.date < bounds[0] || i.date > bounds[1])) return false;
+    return true;
+  });
+
+  for (const b of document.querySelectorAll('[data-tf]')) {
+    const v = b.dataset.tf;
+    b.setAttribute('aria-pressed', String(v === 'all' ? types.size === 0 : types.has(v)));
+  }
+  for (const b of document.querySelectorAll('[data-sf]')) b.setAttribute('aria-pressed', String(b.dataset.sf === status));
+  for (const b of document.querySelectorAll('[data-rf]')) b.setAttribute('aria-pressed', String(b.dataset.rf === range));
+
+  $('#datechip').hidden = !date;
+  if (date) $('#datechip-txt').textContent = fmtDate(date, { weekday: 'short', day: 'numeric', month: 'short' });
+
+  const total = state.items.length;
+  const open = state.items.filter((i) => i.type !== 'event' && !i.done).length;
+  $('#b-sub').textContent = `${total} item${total === 1 ? '' : 's'} · ${open} open · showing ${shown.length}`;
+
+  const host = $('#b-list');
+  host.replaceChildren();
+
+  if (!shown.length) {
+    host.append(el('div', { class: 'empty', text: state.query ? `Nothing matches “${state.query}”` : 'No items match these filters' }));
+    return;
+  }
+
+  const groups = new Map();
+  for (const i of shown) {
+    const key = i.date || '';                       // undated look-outs bucket together
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(i);
+  }
+
+  // Undated last, everything else chronological.
+  const keys = [...groups.keys()].sort((a, b) => (a === '' ? 1 : 0) - (b === '' ? 1 : 0) || a.localeCompare(b));
+  for (const d of keys) {
+    const rows = groups.get(d).sort(compareTaskish);
+
+    host.append(el('div', { class: 'grp' },
+      el('div', { class: 'grp-lbl' },
+        d ? groupHeading(d, today) : 'No date',
+        el('span', { class: 'n tnum', text: String(rows.length) }),
+        el('span', { class: 'rule' }),
+      ),
+      el('div', {}, rows.map((i) => backlogRow(i, today))),
+    ));
+  }
+}
+
+function render() {
+  renderToday();
+  renderBacklog();
+}
+
+/* ── form ────────────────────────────────────────────────── */
+
+function syncForm() {
+  const { type, priority } = state.form;
+  const date = $('#f-date').value;
+
+  for (const b of document.querySelectorAll('#f-type button')) b.setAttribute('aria-selected', String(b.dataset.type === type));
+  for (const b of document.querySelectorAll('#f-prio button')) b.setAttribute('aria-pressed', String(b.dataset.prio === priority));
+
+  // Look-outs and todos can be jotted down now and dated later.
+  const dateOptional = DATELESS_OK.has(type);
+  $('#f-date').required = !dateOptional;
+  $('#f-date-lbl').textContent = state.form.range
+    ? 'From'
+    : (dateOptional ? (type === 'todo' ? 'Date (optional)' : 'Due date (optional)') : 'Date');
+
+  // Optional window for something whose exact day is not settled yet.
+  const canRange = Boolean(date);
+  $('#f-range-toggle').hidden = !canRange;
+  $('#f-range-toggle').textContent = state.form.range ? 'remove range' : '+ range';
+  const rangeOn = canRange && state.form.range;
+  $('#f-end-wrap').hidden = !rangeOn;
+  $('#f-mode-wrap').hidden = !rangeOn;
+  $('#f-end').min = date || '';
+  for (const b of document.querySelectorAll('#f-mode button')) {
+    b.setAttribute('aria-pressed', String((b.dataset.mode === 'daily') === state.form.daily));
+  }
+
+  $('#f-prio-wrap').hidden = !PRIORITIZED.has(type);
+}
+
+function setType(type) {
+  state.form.type = type;
+  state.form.priority = PRIORITIZED.has(type) ? (state.form.priority || 'low') : null;
+  applyDateDefault();
+  syncForm();
+}
+
+/**
+ * Events need a day, so the field starts on today. Tasks and
+ * look-outs do not: leave the field empty so an item you never dated is saved
+ * dateless rather than silently landing on today. A date the user typed
+ * themselves is never cleared.
+ */
+function applyDateDefault() {
+  const field = $('#f-date');
+  if (state.form.dateTouched) return;
+
+  if (DATELESS_OK.has(state.form.type)) {
+    field.value = '';
+    state.form.range = false;
+    $('#f-end').value = '';
+  } else if (!field.value) {
+    field.value = todayISO();
+  }
+}
+
+function wireForm() {
+  wireTimeField();
+
+  $('#f-type').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-type]');
+    if (b) setType(b.dataset.type);
+  });
+
+  $('#f-prio').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-prio]');
+    if (!b) return;
+    state.form.priority = b.dataset.prio;   // a task always has one; low is the fallback, not "none"
+    syncForm();
+  });
+
+  $('#f-date').addEventListener('input', () => {
+    state.form.dateTouched = Boolean($('#f-date').value);   // an explicit choice sticks
+    syncForm();
+  });
+  $('#f-end').addEventListener('input', syncForm);
+
+  $('#f-mode').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-mode]');
+    if (!b) return;
+    state.form.daily = b.dataset.mode === 'daily';
+    syncForm();
+  });
+
+  $('#f-range-toggle').addEventListener('click', () => {
+    state.form.range = !state.form.range;
+    if (!state.form.range) state.form.daily = false;
+    if (state.form.range && !$('#f-end').value && $('#f-date').value) {
+      $('#f-end').value = shiftISO($('#f-date').value, 6);   // default to a week
+    }
+    if (!state.form.range) $('#f-end').value = '';
+    syncForm();
+  });
+
+  $('#form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = $('#f-err');
+    err.textContent = '';
+
+    const title = $('#f-title').value.trim();
+    const date = $('#f-date').value;
+    const dateOptional = DATELESS_OK.has(state.form.type);
+
+    if (!title) { err.textContent = 'Title is required'; $('#f-title').focus(); return; }
+    if (!date && !dateOptional) { err.textContent = 'Date is required'; $('#f-date').focus(); return; }
+    if (state.form.range && date) {
+      const end = $('#f-end').value;
+      if (!end) { err.textContent = 'Pick the last day of the window, or remove the range'; $('#f-end').focus(); return; }
+      if (end < date) { err.textContent = 'The window cannot end before it starts'; $('#f-end').focus(); return; }
+    }
+
+    const payload = {
+      type: state.form.type,
+      title,
+      date: date || null,
+      time: timeField.value,
+      note: $('#f-note').value.trim() || null,
+      priority: PRIORITIZED.has(state.form.type) ? state.form.priority : null,
+      end_date: state.form.range && date ? ($('#f-end').value || null) : null,
+      daily: state.form.range && date ? state.form.daily : false,
+    };
+
+    const btn = $('#f-submit');
+    const editingId = state.editing;
+    btn.disabled = true;
+    try {
+      if (editingId) {
+        await api(`/api/items/${editingId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        cancelEdit();
+        await refresh();
+        toast('Changes saved');
+      } else {
+        await api('/api/items', { method: 'POST', body: JSON.stringify(payload) });
+        $('#f-title').value = '';
+        timeField.set(null);
+        $('#f-note').value = '';
+        state.form.range = false;
+        state.form.daily = false;
+        state.form.dateTouched = false;
+        $('#f-end').value = '';
+        applyDateDefault();
+        syncForm();
+        await refresh();
+        toast(`${LABEL[payload.type]} added`);
+        $('#f-title').focus();
+      }
+    } catch (e2) {
+      err.textContent = e2.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  setType('event');
+}
+
+/** Load an existing item into the form for editing. */
+function loadForEdit(item) {
+  state.editing = item.id;
+  state.form.type = item.type;
+  state.form.priority = item.priority || (PRIORITIZED.has(item.type) ? 'low' : null);
+  state.form.range = Boolean(item.end_date);
+  state.form.daily = Boolean(item.daily);
+  state.form.dateTouched = Boolean(item.date);
+  $('#f-title').value = item.title;
+  $('#f-date').value = item.date || '';
+  $('#f-end').value = item.end_date || '';
+  $('#f-note').value = item.note || '';
+  timeField.set(item.time || null);
+
+  $('#edit-note').hidden = false;
+  $('#edit-title').textContent = item.title;
+  $('#f-submit').textContent = 'Save changes';
+  $('#f-err').textContent = '';
+  syncForm();
+
+  location.hash = '#/backlog';
+  setTimeout(() => {
+    $('#form').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    $('#f-title').focus();
+  }, 90);
+}
+
+function cancelEdit() {
+  state.editing = null;
+  $('#edit-note').hidden = true;
+  $('#f-submit').textContent = 'Add item';
+  state.form.range = false;
+  state.form.daily = false;
+  state.form.dateTouched = false;
+  $('#f-title').value = '';
+  $('#f-note').value = '';
+  $('#f-date').value = '';
+  $('#f-end').value = '';
+  timeField.set(null);
+  $('#f-err').textContent = '';
+  setType('event');
+}
+
+function wireFilters() {
+  $('.filters').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+
+    if (b.dataset.tf) {
+      const v = b.dataset.tf;
+      if (v === 'all') state.filters.types.clear();
+      else if (state.filters.types.has(v)) state.filters.types.delete(v);
+      else state.filters.types.add(v);
+    } else if (b.dataset.sf) {
+      state.filters.status = b.dataset.sf;
+    } else if (b.dataset.rf) {
+      state.filters.range = state.filters.range === b.dataset.rf ? null : b.dataset.rf;
+    } else if (b.id === 'datechip-x') {
+      state.filters.date = null;
+      renderCalendar(todayISO());
+    }
+    renderBacklog();
+  });
+
+  // Two search boxes, one query — keep them in step.
+  for (const id of ['#q', '#q2']) {
+    $(id).addEventListener('input', (e) => {
+      state.query = e.target.value;
+      for (const other of ['#q', '#q2']) if (other !== id) $(other).value = state.query;
+      render();
+    });
+  }
+
+  $('#edit-cancel').addEventListener('click', cancelEdit);
+
+  $('#tab-add').addEventListener('click', () => {
+    cancelEdit();
+    location.hash = '#/backlog';
+    setTimeout(() => {
+      $('#f-title').focus();
+      $('#f-title').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 90);
+  });
+
+  $('#cal-prev').addEventListener('click', () => { state.calMonth = monthShift(state.calMonth, -1); renderCalendar(todayISO()); });
+  $('#cal-next').addEventListener('click', () => { state.calMonth = monthShift(state.calMonth, 1); renderCalendar(todayISO()); });
+}
+
+function monthShift(ym, delta) {
+  const [y, m] = ym.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1 + delta, 1));
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}`;
+}
+
+/* ── routing ─────────────────────────────────────────────── */
+
+function route() {
+  const view = location.hash.replace('#/', '') === 'backlog' ? 'backlog' : 'today';
+  $('#view-today').classList.toggle('on', view === 'today');
+  $('#view-backlog').classList.toggle('on', view === 'backlog');
+  for (const a of document.querySelectorAll('[data-nav]')) a.classList.toggle('active', a.dataset.nav === view);
+  document.title = view === 'backlog' ? 'Backlog · Planit' : 'Today · Planit';
+  $('.main').scrollTop = 0;
+}
+
+/* ── boot ────────────────────────────────────────────────── */
+
+async function boot() {
+  wireForm();
+  wireFilters();
+  window.addEventListener('hashchange', route);
+  route();
+
+  try {
+    await refresh();
+  } catch (err) {
+    toast(err.message, true);
+  }
+
+  setInterval(() => { if ($('#view-today').classList.contains('on')) renderToday(); }, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refresh().catch(() => {});
+  });
+}
+
+boot();
+})();
+</script>
+</body>
+</html>
