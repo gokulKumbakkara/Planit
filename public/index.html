@@ -989,7 +989,7 @@ const state = {
   calMonth: todayISO().slice(0, 7),
   form: { type: 'event', priority: null, range: false, daily: false, dateTouched: false },
   editing: null,        // id of the item currently open in the form, if any
-  filters: { types: new Set(), status: 'all', range: null, date: null },
+  filters: { types: new Set(), status: 'upcoming', range: null, date: null },
 };
 
 const matchesQuery = (i) => {
