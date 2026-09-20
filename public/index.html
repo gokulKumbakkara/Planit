@@ -146,6 +146,42 @@ a{color:inherit;text-decoration:none}
   }
 }
 
+/* ── Today's Routine card — laptop only, same rail spot as Scribble.
+   A fixed-width reference card (not a growing column) since its content
+   is a short, unchanging daily routine, not something to fill space. ── */
+.t-cols{display:flex}
+.t-main{flex:1;min-width:0;max-width:760px}
+.routine-rail{display:none}
+
+@media (min-width:1300px){
+  #view-today.wrap{max-width:none}
+  .t-cols{gap:32px}
+  .routine-rail{display:block;flex:none;width:270px;position:sticky;top:24px}
+}
+
+.routine-card{background:var(--surface);border:1px solid var(--rule-2);border-radius:12px;padding:18px 18px 16px}
+.routine-title{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:2px}
+.routine-sub{font-size:11px;color:var(--faint);margin-bottom:14px}
+
+.routine-guard{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--high);padding:7px 0}
+.routine-guard svg{flex:none;width:12px;height:12px;opacity:.85}
+.routine-guard b{font-weight:500;color:var(--high)}
+
+.routine-arc{display:flex;gap:2px;margin:2px 0 6px}
+.routine-arc-svg{flex:none;width:26px;height:100%}
+.routine-arc-col{flex:1;min-width:0}
+.routine-arc-row{height:44px;display:flex;align-items:center}
+.routine-arc-row:first-child{height:40px}
+.routine-arc-row:last-child{height:40px}
+.routine-arc-label{font-size:13px;color:var(--ink-2);line-height:1.3}
+.routine-arc-label b{font-weight:500;color:var(--ink)}
+
+.routine-divider{height:1px;background:var(--rule);margin:12px 0 13px}
+.routine-allday-lbl{font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:9px}
+.routine-chips{display:flex;flex-wrap:wrap;gap:6px}
+.routine-chip{font-size:11.5px;color:var(--muted);border:1px solid var(--rule-2);background:var(--surface-2);padding:5px 9px;border-radius:20px;line-height:1.3}
+.routine-chip b{color:var(--ink-2);font-weight:500}
+
 .head{display:flex;align-items:flex-start;gap:24px;margin-bottom:8px}
 .head-l{flex:1;min-width:0}
 .day{font-size:21px;font-weight:600;letter-spacing:-.022em;line-height:1.25}
@@ -596,17 +632,67 @@ textarea{resize:vertical;min-height:52px}
     <div class="prog"><i id="d-bar"></i></div>
     <div class="prog-lbl tnum" id="d-count">0 of 0 done</div>
 
-    <div class="zero" id="today-zero" hidden>
-      <div class="zero-t">Nothing here yet</div>
-      <div class="zero-s">Add an event, a task, or something to look out for. It shows up here on the day it's due — no notifications, just check in.</div>
-      <button type="button" class="btn btn-primary" id="zero-add">Add your first item</button>
-    </div>
+    <div class="t-cols">
+      <div class="t-main">
+        <div class="zero" id="today-zero" hidden>
+          <div class="zero-t">Nothing here yet</div>
+          <div class="zero-s">Add an event, a task, or something to look out for. It shows up here on the day it's due — no notifications, just check in.</div>
+          <button type="button" class="btn btn-primary" id="zero-add">Add your first item</button>
+        </div>
 
-    <div id="today-groups">
-    <div class="zero-line" id="today-none" hidden>Nothing planned today.</div>
-    <div id="today-types">
-    <div id="col-main"></div>
-    </div>
+        <div id="today-groups">
+        <div class="zero-line" id="today-none" hidden>Nothing planned today.</div>
+        <div id="today-types">
+        <div id="col-main"></div>
+        </div>
+        </div>
+      </div>
+
+      <aside class="routine-rail">
+        <div class="routine-card">
+          <div class="routine-title">Routine</div>
+          <div class="routine-sub">wake to work</div>
+
+          <div class="routine-guard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12"/></svg>
+            <span>No social media — <b>first hour awake</b></span>
+          </div>
+
+          <div class="routine-arc">
+            <svg class="routine-arc-svg" viewBox="0 0 26 212" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M8,20 C8,41 18,41 18,62 C18,84 8,84 8,106 C8,128 18,128 18,150 C18,171 8,171 8,192"
+                    fill="none" stroke="var(--accent-line)" stroke-width="1.4"/>
+              <circle cx="8" cy="20" r="3.4" fill="var(--accent)"/>
+              <circle cx="18" cy="62" r="3.4" fill="var(--accent-dim)"/>
+              <circle cx="8" cy="106" r="3.4" fill="var(--accent-dim)"/>
+              <circle cx="18" cy="150" r="3.4" fill="var(--accent-dim)"/>
+              <circle cx="8" cy="192" r="3.4" fill="var(--accent-dim)"/>
+            </svg>
+            <div class="routine-arc-col">
+              <div class="routine-arc-row"><span class="routine-arc-label"><b>Wake up</b></span></div>
+              <div class="routine-arc-row"><span class="routine-arc-label">Make coffee</span></div>
+              <div class="routine-arc-row"><span class="routine-arc-label">10 min of sunlight</span></div>
+              <div class="routine-arc-row"><span class="routine-arc-label">Check Planit for today</span></div>
+              <div class="routine-arc-row"><span class="routine-arc-label">Learn until office</span></div>
+            </div>
+          </div>
+
+          <div class="routine-guard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12"/></svg>
+            <span>No social media — <b>last hour before sleep</b></span>
+          </div>
+
+          <div class="routine-divider"></div>
+
+          <div class="routine-allday-lbl">Standing, all day</div>
+          <div class="routine-chips">
+            <span class="routine-chip"><b>2+ L</b> water</span>
+            <span class="routine-chip">Fiber</span>
+            <span class="routine-chip">Dinner <b>~7 pm</b></span>
+            <span class="routine-chip">More protein, less sugar</span>
+          </div>
+        </div>
+      </aside>
     </div>
   </section>
 
