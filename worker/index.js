@@ -129,7 +129,7 @@ async function createItem(request, env) {
   let dueSoonDays = 0;
   if (type === 'lookout') {
     dueSoonDays = body.due_soon_days === undefined || body.due_soon_days === null || body.due_soon_days === ''
-      ? 5
+      ? 4
       : Number(body.due_soon_days);
     if (!Number.isInteger(dueSoonDays) || dueSoonDays < 0 || dueSoonDays > 365) {
       return fail('due_soon_days must be a whole number of days, 0–365');
@@ -202,7 +202,7 @@ async function updateItem(request, env, id) {
     if (PRIORITIZED.has(body.type) && !PRIORITIZED.has(current.type) && !('priority' in body)) set('priority', 'low');
     // Due-soon threshold only applies to look-outs; same in/out defaulting.
     if (body.type !== 'lookout' && !('due_soon_days' in body)) set('due_soon_days', 0);
-    if (body.type === 'lookout' && current.type !== 'lookout' && !('due_soon_days' in body)) set('due_soon_days', 5);
+    if (body.type === 'lookout' && current.type !== 'lookout' && !('due_soon_days' in body)) set('due_soon_days', 4);
   }
 
   if ('title' in body) {
@@ -259,7 +259,7 @@ async function updateItem(request, env, id) {
   if ('due_soon_days' in body) {
     if (body.due_soon_days === null || body.due_soon_days === '') {
       const willBeLookout = 'type' in body ? body.type === 'lookout' : (await currentType()) === 'lookout';
-      set('due_soon_days', willBeLookout ? 5 : 0);
+      set('due_soon_days', willBeLookout ? 4 : 0);
     } else {
       const n = Number(body.due_soon_days);
       if (!Number.isInteger(n) || n < 0 || n > 365) return fail('due_soon_days must be a whole number of days, 0–365');

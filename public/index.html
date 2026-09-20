@@ -738,7 +738,7 @@ textarea{resize:vertical;min-height:52px}
           </div>
           <div class="field" id="f-duesoon-wrap" hidden>
             <label class="lbl" for="f-duesoon">Notify me (days before due)</label>
-            <input type="number" id="f-duesoon" min="0" max="365" step="1" placeholder="5">
+            <input type="number" id="f-duesoon" min="0" max="365" step="1" placeholder="4">
           </div>
         </div>
       </div>
@@ -1031,7 +1031,7 @@ const coversToday = (i, today) =>
 
 /** True once any open look-out is within its own due-soon window (or already overdue). */
 const lookoutsDueSoon = (today) =>
-  state.items.some((i) => i.type === 'lookout' && !i.done && i.date && daysFrom(today, i.date) <= (i.due_soon_days ?? 5));
+  state.items.some((i) => i.type === 'lookout' && !i.done && i.date && daysFrom(today, i.date) <= (i.due_soon_days ?? 4));
 
 /**
  * "Open" for a todo/look-out is simply not done; an event has no done concept,
@@ -1664,13 +1664,13 @@ function syncForm() {
   // Only look-outs have a due-soon threshold — how many days ahead of the
   // due date the Backlog nav badge should light up for this one item.
   $('#f-duesoon-wrap').hidden = type !== 'lookout';
-  if (type === 'lookout') $('#f-duesoon').value = dueSoonDays ?? 5;
+  if (type === 'lookout') $('#f-duesoon').value = dueSoonDays ?? 4;
 }
 
 function setType(type) {
   state.form.type = type;
   state.form.priority = PRIORITIZED.has(type) ? (state.form.priority || 'low') : null;
-  state.form.dueSoonDays = type === 'lookout' ? (state.form.dueSoonDays || 5) : null;
+  state.form.dueSoonDays = type === 'lookout' ? (state.form.dueSoonDays || 4) : null;
   applyDateDefault();
   syncForm();
 }
@@ -1844,7 +1844,7 @@ function loadForEdit(item) {
   state.editing = item.id;
   state.form.type = item.type;
   state.form.priority = item.priority || (PRIORITIZED.has(item.type) ? 'low' : null);
-  state.form.dueSoonDays = item.type === 'lookout' ? (item.due_soon_days ?? 5) : null;
+  state.form.dueSoonDays = item.type === 'lookout' ? (item.due_soon_days ?? 4) : null;
   state.form.range = Boolean(item.end_date);
   state.form.daily = Boolean(item.daily);
   state.form.dateTouched = Boolean(item.date);
