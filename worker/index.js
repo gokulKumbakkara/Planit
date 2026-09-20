@@ -123,6 +123,19 @@ async function createItem(request, env) {
     if (!PRIORITIES.has(priority)) return fail('priority must be high, med or low');
   }
 
+  // Look-outs alone carry a "due soon" threshold — how many days ahead of its
+  // due date the nav badge lights up for this item. Set per item so a
+  // doctor's-appointment-style look-out can get more notice than a quick one.
+  let dueSoonDays = 0;
+  if (type === 'lookout') {
+    dueSoonDays = body.due_soon_days === undefined || body.due_soon_days === null || body.due_soon_days === ''
+      ? 5
+      : Number(body.due_soon_days);
+    if (!Number.isInteger(dueSoonDays) || dueSoonDays < 0 || dueSoonDays > 365) {
+      return fail('due_soon_days must be a whole number of days, 0–365');
+    }
+  }
+
   // Optional window: date is the first day it could happen, end_date the last.
   let endDate = null;
   if (body.end_date) {
@@ -136,9 +149,9 @@ async function createItem(request, env) {
   const daily = endDate ? toFlag(body.daily) : 0;
 
   const row = await env.DB.prepare(
-    `INSERT INTO items (type, title, date, end_date, daily, time, note, priority, done, deleted)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0) RETURNING *`,
-  ).bind(type, title, date, endDate, daily, time, note, priority).first();
+    `INSERT INTO items (type, title, date, end_date, daily, time, note, priority, due_soon_days, done, deleted)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0) RETURNING *`,
+  ).bind(type, title, date, endDate, daily, time, note, priority, dueSoonDays).first();
 
   return json(row, 201);
 }
@@ -187,6 +200,9 @@ async function updateItem(request, env, id) {
     // Default low when actually becoming one of those two kinds (never touch
     // it if the item already was one and stays one).
     if (PRIORITIZED.has(body.type) && !PRIORITIZED.has(current.type) && !('priority' in body)) set('priority', 'low');
+    // Due-soon threshold only applies to look-outs; same in/out defaulting.
+    if (body.type !== 'lookout' && !('due_soon_days' in body)) set('due_soon_days', 0);
+    if (body.type === 'lookout' && current.type !== 'lookout' && !('due_soon_days' in body)) set('due_soon_days', 5);
   }
 
   if ('title' in body) {
@@ -240,6 +256,16 @@ async function updateItem(request, env, id) {
       set('priority', p);
     }
   }
+  if ('due_soon_days' in body) {
+    if (body.due_soon_days === null || body.due_soon_days === '') {
+      const willBeLookout = 'type' in body ? body.type === 'lookout' : (await currentType()) === 'lookout';
+      set('due_soon_days', willBeLookout ? 5 : 0);
+    } else {
+      const n = Number(body.due_soon_days);
+      if (!Number.isInteger(n) || n < 0 || n > 365) return fail('due_soon_days must be a whole number of days, 0–365');
+      set('due_soon_days', n);
+    }
+  }
   if ('done' in body) {
     const doneFlag = toFlag(body.done);
     set('done', doneFlag);
@@ -265,6 +291,24 @@ async function deleteItem(env, id) {
   return row ? json({ ok: true, id: row.id }) : fail('Item not found', 404);
 }
 
+/* ── /api/scribble ──────────────────────────────────────────────────────── */
+// A single free-text scratchpad, not tied to any item or date.
+
+async function getScribble(env) {
+  const row = await env.DB.prepare('SELECT text FROM scribble WHERE id = 1').first();
+  return json({ text: row?.text ?? '' });
+}
+
+async function saveScribble(request, env) {
+  const body = await readJson(request);
+  if (!body || typeof body.text !== 'string') return fail('text must be a string');
+  const text = body.text.slice(0, 20000);
+  await env.DB.prepare(
+    "UPDATE scribble SET text = ?, updated_at = datetime('now') WHERE id = 1",
+  ).bind(text).run();
+  return json({ text });
+}
+
 /* ── router ─────────────────────────────────────────────────────────────── */
 
 async function handleApi(request, env, path) {
@@ -272,6 +316,12 @@ async function handleApi(request, env, path) {
 
   if (path === '/api/config' && method === 'GET') {
     return json({ today: istDate(), timeZone: IST });
+  }
+
+  if (path === '/api/scribble') {
+    if (method === 'GET') return getScribble(env);
+    if (method === 'PUT') return saveScribble(request, env);
+    return fail('Method not allowed', 405);
   }
 
   if (path === '/api/items') {

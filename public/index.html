@@ -14,9 +14,6 @@
 <link rel="icon" type="image/png" href="/icon.png">
 <link rel="apple-touch-icon" href="/icon.png">
 <link rel="mask-icon" href="/icon.svg" color="#7d9b76">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
 /* ─────────────────────────────────────────────────────────────
    Soft Dusk — warm charcoal, one sage accent, no gradients.
@@ -45,7 +42,8 @@
   --med:#cda86a;
   --low:#93b58a;
 
-  --font:'Public Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  /* San Francisco on macOS/iOS via the system stack — no web font to load */
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,'Segoe UI',Roboto,sans-serif;
 
   accent-color:#93b58a;
   color-scheme:dark;
@@ -90,15 +88,12 @@ a{color:inherit;text-decoration:none}
 .nav a.active{color:var(--ink);background:var(--surface);box-shadow:inset 2px 0 0 var(--accent);font-weight:500}
 .nav .n{margin-left:auto;font-size:12px;color:var(--faint)}
 
-.side-lbl{
-  font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--faint);padding:30px 20px 10px;
-}
-.side-stat{display:flex;align-items:center;gap:10px;padding:6px 20px;font-size:13px;color:var(--ink-2)}
-.side-stat .d{width:6px;height:6px;border-radius:50%;flex:none}
-.side-stat .n{margin-left:auto;font-size:12px;color:var(--faint)}
+/* a look-out that's due or overdue — a quiet cue, not a count */
+.due-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--high);flex:none;margin-left:6px;vertical-align:middle}
+.d{width:6px;height:6px;border-radius:50%;flex:none}
 
 .side-foot{margin-top:auto;padding:14px 20px 0;border-top:1px solid var(--rule);margin-left:0}
+.backup-btn{width:100%;justify-content:center;margin-bottom:12px}
 .user{display:flex;align-items:center;gap:11px;min-width:0}
 .avatar{
   width:30px;height:30px;flex:none;border-radius:50%;
@@ -111,26 +106,75 @@ a{color:inherit;text-decoration:none}
 
 /* ── main ────────────────────────────────────────────────── */
 .main{flex:1;min-width:0;height:100vh;height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.wrap{max-width:1080px;padding:34px 40px 60px}
+.wrap{max-width:640px;padding:34px 40px 60px}
+
+/* laptop: more room for the same left-anchored column, not a second panel —
+   rows, titles and notes get to breathe instead of wrapping tight while the
+   rest of the screen sits empty. */
+@media (min-width:1100px){
+  .wrap{max-width:800px}
+}
 .view{display:none}
 .view.on{display:block}
+
+/* ── Backlog's Scribble pad — laptop only, a free scratchpad beside the
+   list. Sticky and viewport-tall so it always reaches the bottom of the
+   screen, rather than only as tall as however long today's list is. ─── */
+.b-cols{display:flex}
+.b-main{flex:1;min-width:0;max-width:760px}
+.scribble{display:none}
+.scribble-title{
+  font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:12px;
+}
+.scribble-pad{
+  flex:1;width:100%;background:var(--surface);border:1px solid var(--rule-2);border-radius:10px;
+  padding:16px 18px;color:var(--ink);font-size:13.5px;line-height:1.7;resize:none;
+  transition:border-color .15s;
+}
+.scribble-pad:hover{border-color:#474340}
+.scribble-pad:focus{outline:none;border-color:var(--accent-line)}
+.scribble-pad::placeholder{color:var(--faint)}
+
+@media (min-width:1300px){
+  #view-backlog.wrap{max-width:none}
+  .b-cols{gap:32px}
+  .scribble{
+    display:flex;flex-direction:column;flex:1;min-width:320px;
+    position:sticky;top:24px;
+    height:calc(100vh - 48px);height:calc(100dvh - 48px);
+  }
+}
 
 .head{display:flex;align-items:flex-start;gap:24px;margin-bottom:8px}
 .head-l{flex:1;min-width:0}
 .day{font-size:21px;font-weight:600;letter-spacing:-.022em;line-height:1.25}
 .day-sub{font-size:13.5px;color:var(--ink-2);margin-top:4px}
 .day-sub b{color:var(--ink-2);font-weight:500}
+.north-star{font-size:11.5px;color:var(--faint);margin-top:6px;font-style:italic;line-height:1.5}
+.north-sep{font-style:normal;opacity:.55}
 .head-r{display:flex;align-items:center;gap:8px;flex:none}
 
-.search{position:relative;display:flex;align-items:center;width:210px}
-.search svg{position:absolute;left:11px;width:14px;height:14px;color:var(--faint);pointer-events:none}
-.search input{
-  width:100%;background:transparent;border:1px solid var(--rule-2);border-radius:7px;
-  padding:8px 11px 8px 32px;font-size:13px;transition:border-color .15s,background .15s;
+/* collapsed to just the icon; click it to expand into an input */
+.search{position:relative;display:flex;align-items:center;height:32px;width:32px;transition:width .18s ease}
+.search.open{width:210px}
+.search-toggle{
+  position:absolute;left:0;top:0;width:32px;height:32px;flex:none;z-index:1;
+  display:grid;place-items:center;color:var(--faint);border-radius:7px;transition:color .15s,background .15s;
 }
+.search-toggle:hover{color:var(--ink);background:var(--surface)}
+.search-toggle svg{width:14px;height:14px}
+.search input{
+  width:100%;height:100%;background:transparent;border:1px solid var(--rule-2);border-radius:7px;
+  padding:8px 11px 8px 32px;font-size:13px;transition:border-color .15s,background .15s,opacity .15s;
+  opacity:0;pointer-events:none;
+}
+.search.open input{opacity:1;pointer-events:auto}
 .search input:hover{border-color:#474340}
 .search input:focus{outline:none;border-color:var(--accent-line);background:var(--surface)}
 .search input::placeholder{color:var(--faint)}
+.search-backlog{margin-top:14px}
+.search-backlog.open{width:100%}
 
 .prog{height:2px;background:var(--rule-2);max-width:320px;margin:18px 0 5px}
 .prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .45s cubic-bezier(.3,.8,.4,1)}
@@ -206,9 +250,8 @@ a{color:inherit;text-decoration:none}
 .empty{padding:18px 0 6px;font-size:13px;color:var(--faint)}
 
 /* ── backlog ─────────────────────────────────────────────── */
-.b-cols{display:grid;grid-template-columns:minmax(0,1fr) 214px;gap:38px;align-items:start;margin-top:26px}
 
-.form{border:1px solid var(--rule);border-radius:6px;padding:18px}
+.form{border:0;padding:0}
 .form-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
 .form-grid{display:grid;grid-template-columns:1fr 150px 118px;gap:14px}
 .field{display:flex;flex-direction:column;gap:7px;min-width:0}
@@ -276,15 +319,7 @@ textarea{resize:vertical;min-height:52px}
 .prio[aria-pressed="true"].low{color:var(--low);border-color:var(--accent-line);background:var(--accent-soft)}
 #f-mode .prio[aria-pressed="true"]{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft)}
 
-.editing-note{
-  display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:9px 12px;
-  border-radius:8px;background:var(--accent-soft);border:1px solid var(--accent-line);
-  font-size:12.5px;color:var(--accent);
-}
-.editing-note b{font-weight:600}
-.editing-note .sp{flex:1}
-
-.form-foot{display:flex;align-items:center;gap:14px;margin-top:18px;padding-top:15px;border-top:1px solid var(--rule)}
+.form-foot{display:flex;align-items:center;gap:14px;flex:none;padding:15px 24px;border-top:1px solid var(--rule)}
 .form-foot .sp{flex:1}
 .form-err{font-size:12.5px;color:var(--high)}
 
@@ -293,10 +328,6 @@ textarea{resize:vertical;min-height:52px}
 .pill{font-size:12px;padding:6px 10px;border-radius:6px;color:var(--muted);border:1px solid transparent;transition:.15s;white-space:nowrap}
 .pill:hover{color:var(--ink);background:var(--surface)}
 .pill[aria-pressed="true"]{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft);font-weight:500}
-.datechip{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 8px 6px 12px;border-radius:6px;color:var(--accent);border:1px solid var(--accent-line);background:var(--accent-soft)}
-.datechip button{display:grid;place-items:center;width:16px;height:16px;border-radius:4px;color:inherit}
-.datechip button:hover{background:rgba(255,255,255,.1)}
-.datechip svg{width:10px;height:10px}
 
 .brow{display:flex;align-items:flex-start;gap:12px;padding:11px 10px 11px 0;border-bottom:1px solid var(--rule);transition:background .15s;touch-action:manipulation}
 .brow,.brow *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -315,27 +346,31 @@ textarea{resize:vertical;min-height:52px}
    longer it's been ignored — colour comes from carryColor() in JS. */
 .carry-dot{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(0,0,0,.18)}
 
-/* ── calendar rail ───────────────────────────────────────── */
-.rail{position:sticky;top:34px}
-.cal-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.cal-month{font-size:13px;font-weight:500}
-.cal-nav{margin-left:auto;display:flex;gap:2px}
-.cal-btn{width:24px;height:24px;border-radius:5px;display:grid;place-items:center;color:var(--faint);transition:.15s}
-.cal-btn:hover{background:var(--surface);color:var(--ink)}
-.cal-btn svg{width:12px;height:12px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-dow{font-size:10px;font-weight:600;color:var(--faint);text-align:center;padding-bottom:5px;letter-spacing:.04em}
-.cal-day{
-  position:relative;aspect-ratio:1;display:grid;place-items:center;border-radius:5px;
-  font-size:12px;color:var(--ink-2);transition:.13s;font-variant-numeric:tabular-nums;
+/* floating add button — laptop/tablet; phone uses the tabbar's own + instead */
+.fab-add{
+  position:fixed;right:28px;bottom:28px;z-index:40;
+  width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+  background:var(--accent);color:#1c1b1a;box-shadow:0 10px 28px rgba(0,0,0,.45);transition:.15s;
 }
-.cal-day:hover{background:var(--surface-2);color:var(--ink)}
-.cal-day.out{color:#4e4a46}
-.cal-day.today{background:var(--accent);color:#1c1b1a;font-weight:600}
-.cal-day.sel{box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}
-.cal-dot{position:absolute;bottom:2.5px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--accent)}
-.cal-day.today .cal-dot{background:#1c1b1a}
-.cal-note{font-size:11.5px;color:var(--faint);margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+.fab-add:hover{background:#8aa883;transform:translateY(-1px)}
+.fab-add svg{width:22px;height:22px}
+
+/* add/edit item modal — same big-and-calm treatment as the note peek */
+.item-modal{
+  position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
+  padding:28px;background:rgba(10,10,9,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+}
+.item-modal-card{
+  width:100%;max-width:560px;max-height:86vh;
+  background:var(--surface-2);border:1px solid var(--rule-2);border-radius:16px;
+  box-shadow:0 24px 64px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.item-modal-head{display:flex;align-items:center;gap:14px;flex:none;padding:22px 24px 16px}
+.item-modal-title{flex:1;font-size:15px;font-weight:600}
+/* only the field area scrolls — the header and Save/Add button stay put */
+#form{display:flex;flex-direction:column;flex:1;min-height:0}
+.form-scroll{flex:1;min-height:0;overflow-y:auto;padding:0 24px 4px}
 
 /* press-and-hold note peek — big, calm, nothing else on screen */
 .note-peek{
@@ -357,6 +392,20 @@ textarea{resize:vertical;min-height:52px}
 .note-peek-x:hover{background:var(--surface);color:var(--ink)}
 .note-peek-x svg{width:13px;height:13px}
 .note-peek-body{font-size:17px;line-height:1.65;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.note-text-line{margin-bottom:8px}
+
+/* tickable sub-items inside a note — the parent item's own checkbox is
+   untouched by these, deliberately: ticking every dose doesn't silently
+   complete the day's task, and vice versa. */
+.note-check-row{
+  display:flex;align-items:center;gap:14px;width:100%;padding:10px 6px;border-radius:9px;
+  font-size:16px;color:var(--ink);text-align:left;transition:background .15s;
+}
+.note-check-row:hover{background:rgba(255,255,255,.04)}
+.note-check-row .cb{flex:none}
+.note-check-row[aria-checked="true"] .cb{background:var(--accent);border-color:var(--accent)}
+.note-check-row[aria-checked="true"] .cb svg{opacity:1}
+.note-check-row[aria-checked="true"] .note-check-label{color:var(--faint);text-decoration:line-through;text-decoration-color:#7d766d}
 
 .toast{
   position:fixed;bottom:24px;left:50%;transform:translate(-50%,10px);
@@ -384,12 +433,8 @@ textarea{resize:vertical;min-height:52px}
   .pill{padding:8px 13px}
   .prio,.lead{padding:10px 15px}
   .seg button{padding-top:10px;padding-bottom:10px}
-  .cal-day{font-size:13.5px}
-  .cal-btn{width:30px;height:30px}
   .tf-opt{padding:11px 12px;font-size:15px}
 }
-
-@media(max-width:1120px){.b-cols{grid-template-columns:minmax(0,1fr)}.rail{position:static;max-width:360px}}
 
 /* iPad portrait and narrow landscape: keep the sidebar, ease the content */
 @media (max-width:1000px) and (min-width:701px){
@@ -397,13 +442,14 @@ textarea{resize:vertical;min-height:52px}
   .head{flex-wrap:wrap;row-gap:14px}
   .head-l{flex:1 1 100%}
   .head-r{flex:1 1 100%;justify-content:flex-start}
-  .search{flex:1;max-width:none}
+  .search{flex:none}
+  .search.open{flex:1;max-width:none}
   .form-grid{grid-template-columns:1fr 150px 130px}
 }
 @media (max-width:1000px){
   .filters{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .filters::-webkit-scrollbar{display:none}
-  .pill,.fdiv,.datechip{flex:none}
+  .pill,.fdiv{flex:none}
 }
 
 /* ── phone ─────────────────────────────────────────────────
@@ -416,6 +462,7 @@ textarea{resize:vertical;min-height:52px}
 
 @media(max-width:700px){
   .sidebar{display:none}
+  .fab-add{display:none}       /* the tabbar's own + already covers this */
   .main{height:auto;flex:1}
   body{display:block;overflow:visible}
   .wrap{padding:calc(14px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom))}
@@ -428,7 +475,8 @@ textarea{resize:vertical;min-height:52px}
   }
   .day{font-size:22px}
   .head-r{width:100%;gap:8px}
-  .search{flex:1;width:auto}
+  .search{flex:none}
+  .search.open{flex:1;width:auto}
   .iconbtn{width:42px;height:42px}
   .head-r .btn{min-height:42px}
 
@@ -461,8 +509,6 @@ textarea{resize:vertical;min-height:52px}
   .pill{padding:9px 14px;font-size:13px;flex:none}
   .fdiv{flex:none}
 
-  .rail{max-width:none;margin-top:26px}
-  .cal-day{font-size:14px;border-radius:7px}
   .tf-list{max-height:44vh}
   .tf-opt{padding:11px 12px;font-size:15px}
 
@@ -510,15 +556,14 @@ textarea{resize:vertical;min-height:52px}
 
   <nav class="nav">
     <a href="#/today" data-nav="today">Today <span class="n tnum" id="nav-today-n"></span></a>
-    <a href="#/backlog" data-nav="backlog">Backlog <span class="n tnum" id="nav-backlog-n"></span></a>
+    <a href="#/backlog" data-nav="backlog">Backlog <span class="n tnum" id="nav-backlog-n"></span><span class="due-dot" id="nav-lookout-dot" hidden></span></a>
   </nav>
 
-  <div class="side-lbl">Open</div>
-  <div class="side-stat"><span class="d" style="background:var(--accent)"></span>Events<span class="n tnum" id="leg-event">0</span></div>
-  <div class="side-stat"><span class="d" style="background:var(--high)"></span>Tasks<span class="n tnum" id="leg-todo">0</span></div>
-  <div class="side-stat"><span class="d" style="background:var(--look)"></span>Look out<span class="n tnum" id="leg-lookout">0</span></div>
-
   <div class="side-foot">
+    <button type="button" class="btn btn-quiet backup-btn" id="backup-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      Download backup
+    </button>
     <div class="user">
       <div class="avatar">GK</div>
       <div class="user-meta">
@@ -536,16 +581,15 @@ textarea{resize:vertical;min-height:52px}
       <div class="head-l">
         <h1 class="day" id="d-day">—</h1>
         <div class="day-sub" id="d-next">—</div>
+        <div class="north-star">Get in shape<span class="north-sep">&nbsp; &nbsp;·&nbsp; &nbsp;</span>Change job</div>
       </div>
       <div class="head-r">
         <div class="search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <button type="button" class="search-toggle" aria-label="Search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          </button>
           <input type="search" id="q" placeholder="Search" aria-label="Search items">
         </div>
-        <a class="btn" href="#/backlog">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          Add
-        </a>
       </div>
     </div>
 
@@ -555,28 +599,13 @@ textarea{resize:vertical;min-height:52px}
     <div class="zero" id="today-zero" hidden>
       <div class="zero-t">Nothing here yet</div>
       <div class="zero-s">Add an event, a task, or something to look out for. It shows up here on the day it's due — no notifications, just check in.</div>
-      <a class="btn btn-primary" href="#/backlog">Add your first item</a>
+      <button type="button" class="btn btn-primary" id="zero-add">Add your first item</button>
     </div>
 
     <div id="today-groups">
-    <div class="zero-line" id="today-none" hidden>Nothing scheduled today.</div>
+    <div class="zero-line" id="today-none" hidden>Nothing planned today.</div>
     <div id="today-types">
-    <div class="grp">
-      <div class="grp-lbl">Events <span class="n tnum" id="n-event"></span><span class="rule"></span></div>
-      <div id="col-event"></div>
-    </div>
-    <div class="grp" id="grp-todo">
-      <div class="grp-lbl">Tasks <span class="n tnum" id="n-todo"></span><span class="rule"></span></div>
-      <div id="col-todo"></div>
-    </div>
-    </div>
-    <div class="grp" id="grp-lookout">
-      <div class="grp-lbl">Look out <span class="n tnum" id="n-lookout"></span><span class="rule"></span></div>
-      <div id="col-lookout"></div>
-    </div>
-    <div class="grp">
-      <div class="grp-lbl"><span id="soon-lbl">Next three days</span> <span class="n tnum" id="n-soon"></span><span class="rule"></span></div>
-      <div id="col-soon"></div>
+    <div id="col-main"></div>
     </div>
     </div>
   </section>
@@ -588,117 +617,30 @@ textarea{resize:vertical;min-height:52px}
         <h1 class="day">Backlog</h1>
         <div class="day-sub" id="b-sub">—</div>
       </div>
-      <div class="head-r">
-        <div class="search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
-          <input type="search" id="q2" placeholder="Search" aria-label="Search items">
-        </div>
-      </div>
     </div>
 
     <div class="b-cols">
-      <div>
-        <form class="form" id="form" autocomplete="off">
-          <div class="editing-note" id="edit-note" hidden>
-            <span>Editing <b id="edit-title"></b></span>
-            <span class="sp"></span>
-            <button type="button" class="btn btn-quiet" id="edit-cancel">Cancel</button>
-          </div>
-          <div class="form-row">
-            <div class="seg" id="f-type">
-              <button type="button" data-type="event">Event</button>
-              <button type="button" data-type="todo">Task</button>
-              <button type="button" data-type="lookout">Look out</button>
-            </div>
-          </div>
-
-          <div class="form-grid">
-            <div class="field">
-              <label class="lbl" for="f-title">Title</label>
-              <input type="text" id="f-title" placeholder="What needs to happen?" maxlength="500" required>
-            </div>
-            <div class="field">
-              <label class="lbl" for="f-date">
-                <span id="f-date-lbl">Date</span>
-                <button type="button" class="lnk" id="f-range-toggle">+ range</button>
-              </label>
-              <input type="date" id="f-date" required>
-            </div>
-            <div class="field" id="f-end-wrap" hidden>
-              <label class="lbl" for="f-end">Until</label>
-              <input type="date" id="f-end">
-            </div>
-            <div class="field wide" id="f-mode-wrap" hidden>
-              <span class="lbl">Across those dates</span>
-              <div class="prio-row" id="f-mode">
-                <button type="button" class="prio" data-mode="window">One day, not fixed yet</button>
-                <button type="button" class="prio" data-mode="daily">Every day</button>
-              </div>
-            </div>
-            <div class="field">
-              <label class="lbl" for="f-time">Time</label>
-              <div class="tf">
-                <input type="text" id="f-time" placeholder="Optional" autocomplete="off"
-                       role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="tf-list">
-                <button type="button" class="tf-clear" id="tf-clear" aria-label="Clear time" hidden>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                </button>
-                <div class="tf-pop" id="tf-pop" hidden><div class="tf-list" id="tf-list" role="listbox" aria-label="Times"></div></div>
-              </div>
-            </div>
-            <div class="field wide">
-              <label class="lbl" for="f-note">Note</label>
-              <textarea id="f-note" rows="2" maxlength="2000" placeholder="Add a note…"></textarea>
-            </div>
-            <div class="field" id="f-prio-wrap" hidden>
-              <span class="lbl">Priority</span>
-              <div class="prio-row" id="f-prio">
-                <button type="button" class="prio high" data-prio="high">High</button>
-                <button type="button" class="prio med" data-prio="med">Med</button>
-                <button type="button" class="prio low" data-prio="low">Low</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-foot">
-            <div class="form-err" id="f-err"></div>
-            <div class="sp"></div>
-            <button type="submit" class="btn btn-primary" id="f-submit">Add item</button>
-          </div>
-        </form>
+      <div class="b-main">
+        <div class="search search-backlog">
+          <button type="button" class="search-toggle" aria-label="Search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          </button>
+          <input type="search" id="q2" placeholder="Search" aria-label="Search items">
+        </div>
 
         <div class="filters">
           <button class="pill" data-tf="all">All</button>
+          <button class="pill" data-tf="lookout">Look out<span class="due-dot" id="pill-lookout-dot" hidden></span></button>
           <button class="pill" data-tf="event">Events</button>
           <button class="pill" data-tf="todo">Tasks</button>
-          <button class="pill" data-tf="lookout">Look out</button>
-          <span class="fdiv"></span>
-          <button class="pill" data-sf="all">Any status</button>
-          <button class="pill" data-sf="upcoming">Open</button>
-          <button class="pill" data-sf="done">Done</button>
-          <span class="fdiv"></span>
-          <button class="pill" data-rf="next3">Next 3 days</button>
-          <button class="pill" data-rf="week">This week</button>
-          <button class="pill" data-rf="month">This month</button>
-          <span class="datechip" id="datechip" hidden>
-            <span id="datechip-txt"></span>
-            <button type="button" id="datechip-x" aria-label="Clear date filter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-          </span>
         </div>
 
         <div id="b-list"></div>
       </div>
 
-      <aside class="rail">
-        <div class="cal-head">
-          <span class="cal-month" id="cal-month">—</span>
-          <span class="cal-nav">
-            <button class="cal-btn" id="cal-prev" aria-label="Previous month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-            <button class="cal-btn" id="cal-next" aria-label="Next month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
-          </span>
-        </div>
-        <div class="cal-grid" id="cal-grid"></div>
-        <div class="cal-note">Dotted days have items. Click one to filter the list.</div>
+      <aside class="scribble">
+        <div class="scribble-title">Scribble</div>
+        <textarea id="scribble-pad" class="scribble-pad" placeholder="Plan anything here…"></textarea>
       </aside>
     </div>
   </section>
@@ -721,8 +663,94 @@ textarea{resize:vertical;min-height:52px}
     </svg>
     <span>Backlog</span>
     <i class="tab-n tnum" id="tab-backlog-n"></i>
+    <span class="due-dot tab-due-dot" id="tab-lookout-dot" hidden></span>
   </a>
 </nav>
+
+<button type="button" class="fab-add" id="fab-add" aria-label="Add item">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<div class="item-modal" id="item-modal" hidden>
+  <div class="item-modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="item-modal-head">
+      <span class="item-modal-title" id="modal-title">Add item</span>
+      <button type="button" class="note-peek-x" id="item-modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form class="form" id="form" autocomplete="off">
+      <div class="form-scroll">
+        <div class="form-row">
+          <div class="seg" id="f-type">
+            <button type="button" data-type="event">Event</button>
+            <button type="button" data-type="todo">Task</button>
+            <button type="button" data-type="lookout">Look out</button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label class="lbl" for="f-title">Title</label>
+            <input type="text" id="f-title" placeholder="What needs to happen?" maxlength="500" required>
+          </div>
+          <div class="field">
+            <label class="lbl" for="f-date">
+              <span id="f-date-lbl">Date</span>
+              <button type="button" class="lnk" id="f-range-toggle">+ range</button>
+            </label>
+            <input type="date" id="f-date" required>
+          </div>
+          <div class="field" id="f-end-wrap" hidden>
+            <label class="lbl" for="f-end">Until</label>
+            <input type="date" id="f-end">
+          </div>
+          <div class="field wide" id="f-mode-wrap" hidden>
+            <span class="lbl">Across those dates</span>
+            <div class="prio-row" id="f-mode">
+              <button type="button" class="prio" data-mode="window">One day, not fixed yet</button>
+              <button type="button" class="prio" data-mode="daily">Every day</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="lbl" for="f-time">Time</label>
+            <div class="tf">
+              <input type="text" id="f-time" placeholder="Optional" autocomplete="off"
+                     role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="tf-list">
+              <button type="button" class="tf-clear" id="tf-clear" aria-label="Clear time" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+              <div class="tf-pop" id="tf-pop" hidden><div class="tf-list" id="tf-list" role="listbox" aria-label="Times"></div></div>
+            </div>
+          </div>
+          <div class="field wide">
+            <label class="lbl" for="f-note">Note</label>
+            <textarea id="f-note" rows="4" maxlength="2000" placeholder="Add a note…"></textarea>
+          </div>
+          <div class="field" id="f-prio-wrap" hidden>
+            <span class="lbl">Priority</span>
+            <div class="prio-row" id="f-prio">
+              <button type="button" class="prio high" data-prio="high">High</button>
+              <button type="button" class="prio med" data-prio="med">Med</button>
+              <button type="button" class="prio low" data-prio="low">Low</button>
+            </div>
+          </div>
+          <div class="field" id="f-duesoon-wrap" hidden>
+            <label class="lbl" for="f-duesoon">Notify me (days before due)</label>
+            <input type="number" id="f-duesoon" min="0" max="365" step="1" placeholder="5">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-foot">
+        <div class="form-err" id="f-err"></div>
+        <div class="sp"></div>
+        <button type="submit" class="btn btn-primary" id="f-submit">Add item</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <div class="note-peek" id="note-peek" hidden>
   <div class="note-peek-card" role="dialog" aria-modal="true" aria-labelledby="note-peek-title">
@@ -750,9 +778,9 @@ const LABEL = { event: 'Event', todo: 'Task', lookout: 'Look-out' };
 // Types that can be captured now and scheduled later.
 const DATELESS_OK = new Set(['lookout', 'todo']);
 // Priority means importance, not urgency, so it applies wherever the concept
-// of "how much this matters" is meaningful — tasks and open loops, not
-// appointments (an event doesn't get more or less important by being tagged).
-const PRIORITIZED = new Set(['todo', 'lookout']);
+// of "how much this matters" is meaningful — including an event, whose dot
+// on Today/Backlog is coloured by it (see marker()).
+const PRIORITIZED = new Set(['event', 'todo', 'lookout']);
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -776,8 +804,6 @@ function el(tag, attrs, ...kids) {
 const S = (d, w = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#1c1b1a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
 const X_SVG = S('<path d="M18 6 6 18M6 6l12 12"/>', 2.2);
-const DONE_SVG = S('<path d="M20 6 9 17l-5-5"/>', 2.4);
-const UNDO_SVG = S('<path d="M3 7v6h6"/><path d="M3.5 13a9 9 0 1 0 2.3-6.4L3 9"/>', 2);
 
 /* ── dates (all IST) ─────────────────────────────────────── */
 
@@ -832,32 +858,9 @@ function groupHeading(iso, today) {
   const n = daysFrom(today, iso);
   if (n === 0) return 'Today';
   if (n === 1) return 'Tomorrow';
+  if (n === 2) return 'Day after tomorrow';
   if (n === -1) return 'Yesterday';
   return fmtDate(iso, { weekday: 'short', day: 'numeric', month: 'short' });
-}
-
-/**
- * Inclusive [from, to] ISO bounds for a backlog range filter.
- *   next3 — rolling: today through today+3
- *   week  — the calendar week containing today, Monday to Sunday
- *   month — the calendar month containing today
- */
-function rangeBounds(range, today) {
-  if (range === 'next3') return [today, shiftISO(today, 3)];
-
-  if (range === 'week') {
-    const dow = (new Date(today + 'T00:00:00Z').getUTCDay() + 6) % 7;   // Mon = 0
-    const start = shiftISO(today, -dow);
-    return [start, shiftISO(start, 6)];
-  }
-
-  if (range === 'month') {
-    const [y, m] = today.split('-').map(Number);
-    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();           // day 0 of next month
-    return [`${y}-${pad(m)}-01`, `${y}-${pad(m)}-${pad(lastDay)}`];
-  }
-
-  return null;
 }
 
 /* ── time field ──────────────────────────────────────────────
@@ -985,17 +988,17 @@ function wireTimeField() {
 
 const state = {
   items: [],
-  query: '',
-  calMonth: todayISO().slice(0, 7),
-  form: { type: 'event', priority: null, range: false, daily: false, dateTouched: false },
+  queryToday: '',
+  queryBacklog: '',
+  form: { type: 'event', priority: null, dueSoonDays: null, range: false, daily: false, dateTouched: false },
   editing: null,        // id of the item currently open in the form, if any
-  filters: { types: new Set(), status: 'upcoming', range: null, date: null },
+  filters: { types: new Set() },
 };
 
-const matchesQuery = (i) => {
-  const q = state.query.trim().toLowerCase();
-  if (!q) return true;
-  return i.title.toLowerCase().includes(q) || (i.note || '').toLowerCase().includes(q);
+const makeQueryMatcher = (query) => {
+  const q = query.trim().toLowerCase();
+  if (!q) return () => true;
+  return (i) => i.title.toLowerCase().includes(q) || (i.note || '').toLowerCase().includes(q);
 };
 
 /** "14 – 18 Sept" for a multi-day item. */
@@ -1025,15 +1028,17 @@ function rangeLabel(item, today) {
 const coversToday = (i, today) =>
   Boolean(i.date) && (i.date === today || (i.end_date && today >= i.date && today <= i.end_date));
 
-/** Human label for a look-out item's due date: overdue / today / in N days. */
-function dueLabel(iso, today) {
-  if (!iso) return null;
-  const n = daysFrom(today, iso);
-  if (n < 0) return { text: `${-n} day${n === -1 ? '' : 's'} overdue`, overdue: true };
-  if (n === 0) return { text: 'due today', overdue: true };
-  if (n === 1) return { text: 'due tomorrow', overdue: false };
-  return { text: `due in ${n} days`, overdue: false };
-}
+
+/** True once any open look-out is within its own due-soon window (or already overdue). */
+const lookoutsDueSoon = (today) =>
+  state.items.some((i) => i.type === 'lookout' && !i.done && i.date && daysFrom(today, i.date) <= (i.due_soon_days ?? 5));
+
+/**
+ * "Open" for a todo/look-out is simply not done; an event has no done concept,
+ * so it counts as open while it's still ahead — once its date passes it drops
+ * out of the count on its own, the same way a finished task would.
+ */
+const isOpenItem = (i, today) => (i.type === 'event' ? i.date >= today : !i.done);
 
 /* ── api ─────────────────────────────────────────────────── */
 
@@ -1054,18 +1059,107 @@ function toast(msg, bad) {
   toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
 }
 
+/**
+ * A note line written as "- Morning" is a tickable sub-item — a dose, a stop
+ * on a checklist — rather than free text; ticking it rewrites the line as
+ * "[x] Morning" (also read back in as tickable, so old notes keep working).
+ * Anything else in the note is left as a plain line above/below the checklist.
+ */
+const CHECK_LINE = /^\[\s*([xX]?)\s*\]\s*(.*)$/;
+const DASH_LINE = /^-\s*(.*)$/;
+
+function parseNoteLines(note) {
+  return (note || '').split('\n').map((line) => {
+    const bracket = CHECK_LINE.exec(line);
+    if (bracket) return { checklist: true, done: bracket[1].toLowerCase() === 'x', label: bracket[2] };
+    const dash = DASH_LINE.exec(line);
+    if (dash) return { checklist: true, done: false, label: dash[1] };
+    return { checklist: false, text: line };
+  });
+}
+
+const noteLineToString = (l) => (l.checklist ? (l.done ? `[x] ${l.label}` : `- ${l.label}`) : l.text);
+
+const hasUnfinishedChecklist = (item) => parseNoteLines(item.note).some((l) => l.checklist && !l.done);
+
+/**
+ * Row-preview text for a note: only its plain-text lines — the tickable
+ * checklist stays hidden until you press and hold to open it, rather than
+ * spilling every sub-item's name into the list.
+ */
+function notePreview(note) {
+  return parseNoteLines(note)
+    .filter((l) => !l.checklist && l.text.trim())
+    .map((l) => l.text.trim())
+    .join('  ·  ');
+}
+
+// The peek opens while the long-press that triggered it is still down; the
+// release that follows fires a click somewhere inside the freshly-opened
+// modal (a phantom click from the same gesture, not a real tap) — swallow
+// exactly that one, wherever it lands, so it doesn't close the peek or
+// silently eat the checkbox tap that opens it. Auto-clears if no such click
+// shows up, so it can never block a later, genuine tap.
+let suppressPeekClick = false;
+function armSuppressPeekClick() {
+  suppressPeekClick = true;
+  setTimeout(() => { suppressPeekClick = false; }, 500);
+}
+
 function showNotePeek(item) {
   $('#note-peek-title').textContent = item.title;
-  $('#note-peek-body').textContent = item.note;
+  const body = $('#note-peek-body');
+  body.replaceChildren();
+
+  const lines = parseNoteLines(item.note);
+  if (lines.some((l) => l.checklist)) {
+    lines.forEach((line, idx) => {
+      if (!line.checklist) {
+        if (line.text.trim()) body.append(el('div', { class: 'note-text-line', text: line.text }));
+        return;
+      }
+      body.append(el('button', {
+        type: 'button', role: 'checkbox', class: 'note-check-row',
+        'aria-checked': line.done ? 'true' : 'false',
+        onclick: () => toggleNoteLine(item, idx),
+      },
+        el('span', { class: 'cb', 'aria-hidden': 'true', svg: CHECK }),
+        el('span', { class: 'note-check-label', text: line.label }),
+      ));
+    });
+  } else {
+    body.textContent = item.note;
+  }
   $('#note-peek').hidden = false;
+}
+
+async function toggleNoteLine(item, idx) {
+  const lines = parseNoteLines(item.note);
+  lines[idx].done = !lines[idx].done;
+  const prevNote = item.note;
+  item.note = lines.map(noteLineToString).join('\n');   // optimistic — the row ticks immediately
+  showNotePeek(item);
+  try {
+    await api(`/api/items/${item.id}`, { method: 'PUT', body: JSON.stringify({ note: item.note }) });
+    await refresh();
+  } catch (err) {
+    item.note = prevNote;
+    showNotePeek(item);
+    toast(err.message, true);
+  }
 }
 function hideNotePeek() {
   $('#note-peek').hidden = true;
 }
 function wireNotePeek() {
   $('#note-peek-close').addEventListener('click', hideNotePeek);
-  // Tap/click the dimmed backdrop (not the card itself) to dismiss.
-  $('#note-peek').addEventListener('click', (e) => { if (e.target.id === 'note-peek') hideNotePeek(); });
+  // Capture phase: runs before the click reaches the backdrop or any
+  // checklist row, so the swallowed phantom click never toggles a box either.
+  $('#note-peek').addEventListener('click', (e) => {
+    if (suppressPeekClick) { suppressPeekClick = false; e.stopPropagation(); return; }
+    // Tap/click the dimmed backdrop (not the card itself) to dismiss.
+    if (e.target.id === 'note-peek') hideNotePeek();
+  }, true);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !$('#note-peek').hidden) hideNotePeek();
   });
@@ -1077,6 +1171,71 @@ function wireNotePeek() {
 async function refresh() {
   state.items = await api('/api/items');
   render();
+}
+
+/* ── scribble ────────────────────────────────────────────── */
+
+let scribbleSaveTimer;
+function wireScribble() {
+  const pad = $('#scribble-pad');
+  pad.addEventListener('input', () => {
+    clearTimeout(scribbleSaveTimer);
+    scribbleSaveTimer = setTimeout(async () => {
+      try {
+        await api('/api/scribble', { method: 'PUT', body: JSON.stringify({ text: pad.value }) });
+      } catch (err) {
+        toast(err.message, true);
+      }
+    }, 700);
+  });
+}
+
+async function loadScribble() {
+  try {
+    const { text } = await api('/api/scribble');
+    $('#scribble-pad').value = text;
+  } catch {
+    // Quiet failure — the pad just starts empty rather than blocking the app.
+  }
+}
+
+/** Plain-text rendering of every loaded item, grouped by date like the Backlog — the full history, not a diff, so nothing is ever lost to a stray delete. */
+function formatBackupText(items) {
+  const groups = new Map();
+  for (const i of items) {
+    const key = i.date || '';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(i);
+  }
+  const keys = [...groups.keys()].sort((a, b) => (a === '' ? 1 : 0) - (b === '' ? 1 : 0) || a.localeCompare(b));
+
+  const lines = [`Planit backup — ${fmtDate(todayISO(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`, ''];
+  for (const key of keys) {
+    const heading = key ? fmtDate(key, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'No date';
+    lines.push(heading, '-'.repeat(heading.length));
+    for (const i of groups.get(key).sort(compareTaskish)) {
+      const mark = i.type === 'event' ? '  •' : `  [${i.done ? 'x' : ' '}]`;
+      const bits = [`${mark} ${i.title}`];
+      if (i.type !== 'event') bits.push(`(${i.priority})`);
+      if (i.time) bits.push(`at ${i.time}`);
+      if (i.end_date) bits.push(i.daily ? `— every day through ${i.end_date}` : `— any day through ${i.end_date}`);
+      lines.push(bits.join(' '));
+      for (const noteLine of (i.note || '').split('\n')) if (noteLine.trim()) lines.push(`        ${noteLine}`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+function downloadBackup() {
+  const blob = new Blob([formatBackupText(state.items)], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = el('a', { href: url, download: `planit-backup-${todayISO()}.txt` });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Backup downloaded');
 }
 
 /* ── sorting ─────────────────────────────────────────────── */
@@ -1108,6 +1267,10 @@ function sortForColumn(list, type) {
 
 async function toggleDone(item) {
   const next = item.done ? 0 : 1;
+  if (next && hasUnfinishedChecklist(item)) {
+    toast('Finish the checklist first');
+    return;
+  }
   item.done = next;               // optimistic — the row strikes through immediately
   render();
   try {
@@ -1135,9 +1298,15 @@ async function removeItem(item) {
 
 /* ── shared pieces ───────────────────────────────────────── */
 
-/** Events get a static pip; tasks get a dot that is the checkbox. */
+const PIP_COLOR = { high: 'var(--high)', med: 'var(--med)', low: 'var(--low)' };
+
+/** Events get a static pip, coloured by priority; tasks get a dot that is the checkbox. */
 function marker(item) {
-  if (item.type === 'event') return el('span', { class: 'slot' }, el('span', { class: 'pip' }));
+  if (item.type === 'event') {
+    return el('span', { class: 'slot' }, el('span', {
+      class: 'pip', style: `background:${PIP_COLOR[item.priority] || 'var(--accent-dim)'}`,
+    }));
+  }
   return el('span', { class: 'slot' }, el('button', {
     class: 'cb' + (item.type === 'todo' ? ' sq' : ''),
     type: 'button', role: 'checkbox',
@@ -1189,7 +1358,7 @@ function bindRowGestures(rowEl, item) {
     startX = x; startY = y;
     holdFired = false;
     clearTimeout(holdTimer);
-    holdTimer = item.note ? setTimeout(() => { holdFired = true; showNotePeek(item); }, HOLD_MS) : null;
+    holdTimer = item.note ? setTimeout(() => { holdFired = true; armSuppressPeekClick(); showNotePeek(item); }, HOLD_MS) : null;
   };
   const driftCheck = (x, y) => {
     if (holdTimer && (Math.abs(x - startX) > DRIFT_PX || Math.abs(y - startY) > DRIFT_PX)) {
@@ -1236,23 +1405,6 @@ function bindRowGestures(rowEl, item) {
   return rowEl;
 }
 
-function lookoutRow(item, today) {
-  const due = dueLabel(item.date, today);
-  return bindRowGestures(el('div', { class: 'row' + (item.done ? ' done' : '') },
-    marker(item),
-    el('div', { class: 'row-main' },
-      el('div', { class: 'row-title', text: item.title }),
-      item.note ? el('div', { class: 'row-sub', text: item.note }) : null,
-    ),
-    el('div', { class: 'row-side' },
-      prioTag(item),
-      due
-        ? el('span', { class: 'pr ' + (due.overdue ? 'overdue' : 'look'), text: due.text })
-        : el('span', { class: 'row-time', text: 'no date' }),
-    ),
-  ), item);
-}
-
 function dayRow(item, today) {
   // The carry-dot means "still outstanding and overdue" — never on a done item.
   const overdueDays = item.type === 'todo' && !item.done && item.date && item.date < today ? daysFrom(item.date, today) : 0;
@@ -1262,7 +1414,7 @@ function dayRow(item, today) {
   const sub = [
     doneElsewhere && item.date ? `was due ${fmtDate(item.date, { weekday: 'short', day: 'numeric', month: 'short' })}` : null,
     rangeLabel(item, today),
-    item.note || null,
+    item.note ? notePreview(item.note) : null,
   ].filter(Boolean).join('  ·  ');
 
   return bindRowGestures(el('div', { class: 'row' + (item.done ? ' done' : '') },
@@ -1277,22 +1429,8 @@ function dayRow(item, today) {
         style: `background:${carryColor(overdueDays)}`,
         title: `Carried forward ${overdueDays} day${overdueDays === 1 ? '' : 's'} — was due ${fmtDate(item.date, { weekday: 'long', day: 'numeric', month: 'long' })}`,
       }) : null,
-      prioTag(item),
+      item.type === 'event' ? null : prioTag(item),  // the dot already carries an event's priority here
       item.time ? el('span', { class: 'row-time', text: fmtTime(item.time) }) : null,
-    ),
-  ), item);
-}
-
-function soonRow(item, today) {
-  return bindRowGestures(el('div', { class: 'row' + (item.done ? ' done' : '') },
-    marker(item),
-    el('div', { class: 'row-main' },
-      el('div', { class: 'row-title', text: item.title }),
-      el('div', { class: 'row-sub', text: (rangeLabel(item, today) || fmtDate(item.date, { weekday: 'long', day: 'numeric', month: 'short' })) + (item.time ? ` · ${fmtTime(item.time)}` : '') }),
-    ),
-    el('div', { class: 'row-side' },
-      prioTag(item),
-      el('span', { class: 'rel', text: relDay(item.date, today) }),
     ),
   ), item);
 }
@@ -1301,13 +1439,15 @@ function soonRow(item, today) {
 
 function renderToday() {
   const today = todayISO();
-  const horizon = shiftISO(today, 3);
 
-  const visible = state.items.filter(matchesQuery);
+  const visible = state.items.filter(makeQueryMatcher(state.queryToday));
   // Day-bound kinds. A todo with no date simply never matches a day, so it
   // stays in the backlog until you give it one.
   const dayBound = visible.filter((i) => TODAY_TYPES.includes(i.type));
-  const todays = dayBound.filter((i) => coversToday(i, today));
+  // A done todo only belongs on Today while today is its own due date —
+  // otherwise a multi-day range item (an "every day" programme) marked done
+  // once would keep showing, struck through, for the rest of its range.
+  const todays = dayBound.filter((i) => coversToday(i, today) && (!i.done || i.date === today));
 
   // A todo you didn't finish doesn't vanish once its date passes — it carries
   // forward onto Today until you either do it or delete it. Left unsorted
@@ -1322,17 +1462,6 @@ function renderToday() {
   // the ones that wouldn't otherwise appear.
   const doneToday = visible
     .filter((i) => i.type === 'todo' && i.done && i.done_at === today && !coversToday(i, today));
-
-  // Everything ahead of today, nearest first.
-  const future = dayBound
-    .filter((i) => i.date && i.date > today && !coversToday(i, today))
-    .sort((a, b) => a.date.localeCompare(b.date) || byTime(a, b));
-
-  // Normally the next three days — but if that window is empty and there is
-  // still work further out, show the next few rather than an empty section.
-  const within3 = future.filter((i) => i.date <= horizon);
-  const soon = within3.length ? within3 : future.slice(0, 5);
-  const soonLabel = within3.length ? 'Next three days' : 'Coming up';
 
   $('#d-day').textContent = fmtDate(today, { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -1351,7 +1480,7 @@ function renderToday() {
     const label = mins < 60 ? `${mins} minutes` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
     sub.append(ahead[0].i.title, ' in ', el('b', { text: label }));
   } else {
-    sub.textContent = todays.length ? 'Nothing else scheduled today' : 'Nothing scheduled today';
+    sub.textContent = todays.length ? 'Nothing else planned today' : 'Nothing planned today';
   }
 
   // Completion counts tasks only; events have no done concept.
@@ -1362,51 +1491,22 @@ function renderToday() {
   $('#d-bar').style.width = `${pct}%`;
   $('#d-count').textContent = `${done} of ${countable.length} done`;
 
-  for (const type of TODAY_TYPES) {
-    const host = $('#col-' + type);
-    host.replaceChildren();
+  // Events and tasks share one list now — compareTaskish already puts a
+  // timed event ahead of untimed tasks, then orders by priority, so merging
+  // them needs no extra logic beyond a single sort.
+  const mainHost = $('#col-main');
+  mainHost.replaceChildren();
+  const mainList = overdueTodos.concat(doneToday).concat(todays).sort(compareTaskish);
+  if (mainList.length) mainList.forEach((i) => mainHost.append(dayRow(i, today)));
+  else mainHost.append(el('div', { class: 'empty', text: 'Nothing planned today' }));
 
-    const mine = type === 'todo'
-      ? sortForColumn(overdueTodos.concat(doneToday).concat(todays.filter((i) => i.type === type)), type)
-      : sortForColumn(todays.filter((i) => i.type === type), type);
-    const open = mine.filter((i) => !i.done).length;
-    $('#n-' + type).textContent = mine.length ? (type === 'event' ? String(mine.length) : `${open} open`) : '';
-
-    if (mine.length) mine.forEach((i) => host.append(dayRow(i, today)));
-    else host.append(el('div', { class: 'empty', text: 'Nothing scheduled' }));
-
-    // Events always keep their heading; Tasks only earns one
-    // when something is actually due today.
-    if (type === 'todo') $('#grp-todo').hidden = mine.length === 0;
-  }
-
-  // Sidebar overview still counts every kind, including the ones not shown here.
-  for (const type of [...TYPES, 'lookout']) {
-    $('#leg-' + type).textContent = String(state.items.filter((i) => i.type === type && !i.done).length);
-  }
-
-  // Look out — open loops. Not day-bound, so every open one shows, soonest due
-  // first and undated last.
-  const lookouts = visible
-    .filter((i) => i.type === 'lookout' && !i.done)
-    .sort((a, b) =>
-      (a.date ? 0 : 1) - (b.date ? 0 : 1) ||                          // dated before undated
-      (a.date || '').localeCompare(b.date || '') ||                    // soonest due first
-      (PRIO_RANK[a.priority] ?? 3) - (PRIO_RANK[b.priority] ?? 3) ||   // tie-break: more important first
-      a.id - b.id);
-
-  const lookHost = $('#col-lookout');
-  lookHost.replaceChildren();
-  $('#n-lookout').textContent = lookouts.length ? String(lookouts.length) : '';
-  lookouts.forEach((i) => lookHost.append(lookoutRow(i, today)));
-  $('#grp-lookout').hidden = lookouts.length === 0;   // only earns space when in use
-
-  const soonHost = $('#col-soon');
-  soonHost.replaceChildren();
-  $('#soon-lbl').textContent = soonLabel;
-  $('#n-soon').textContent = soon.length ? String(soon.length) : '';
-  if (soon.length) soon.forEach((i) => soonHost.append(soonRow(i, today)));
-  else soonHost.append(el('div', { class: 'empty', text: 'Nothing coming up' }));
+  // Look-outs don't get their own section on Today any more — just a quiet
+  // dot on the Backlog nav/tab once one is within 5 days of due (or already
+  // overdue), so Today stays about today. The full list still lives in
+  // Backlog's "Look out" filter.
+  const lookoutDue = lookoutsDueSoon(today);
+  $('#nav-lookout-dot').hidden = !lookoutDue;
+  $('#tab-lookout-dot').hidden = !lookoutDue;
 
   // A brand-new, empty app gets one clear prompt instead of four "Nothing scheduled" lines.
   const bare = state.items.length === 0;
@@ -1423,56 +1523,16 @@ function renderToday() {
   $('.prog').hidden = !hasCountable;
   $('#d-count').hidden = !hasCountable;
 
-  const openToday = countable.length ? countable.length - done : 0;
-  const openAll = state.items.filter((i) => i.type !== 'event' && !i.done).length;
+  // The Today badge stays tied to the progress bar's task count (so it never
+  // disagrees with "N of M done"), plus today's events — which have no done
+  // state to subtract, but are still part of what's on today's plate.
+  const todaysEvents = todays.filter((i) => i.type === 'event').length;
+  const openToday = (countable.length ? countable.length - done : 0) + todaysEvents;
+  const openAll = state.items.filter((i) => isOpenItem(i, today)).length;
   $('#nav-today-n').textContent = openToday ? String(openToday) : '';
   $('#nav-backlog-n').textContent = String(openAll);
   $('#tab-today-n').textContent = openToday ? String(openToday) : '';
   $('#tab-backlog-n').textContent = openAll ? String(openAll) : '';
-
-  renderCalendar(today);
-}
-
-/* ── calendar rail ───────────────────────────────────────── */
-
-function renderCalendar(today) {
-  const [y, m] = state.calMonth.split('-').map(Number);
-  const first = `${y}-${pad(m)}-01`;
-  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const lead = (new Date(first + 'T00:00:00Z').getUTCDay() + 6) % 7;    // Monday-first
-
-  $('#cal-month').textContent = fmtDate(first, { month: 'long', year: 'numeric' });
-
-  const marked = new Set(state.items.map((i) => i.date));
-  const grid = $('#cal-grid');
-  grid.replaceChildren();
-
-  for (const d of ['M', 'T', 'W', 'T', 'F', 'S', 'S']) grid.append(el('div', { class: 'cal-dow', text: d }));
-
-  const prevDays = new Date(Date.UTC(y, m - 1, 0)).getUTCDate();
-  for (let i = lead; i > 0; i--) grid.append(el('div', { class: 'cal-day out', text: String(prevDays - i + 1) }));
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const iso = `${y}-${pad(m)}-${pad(d)}`;
-    const cls = ['cal-day'];
-    if (iso === today) cls.push('today');
-    if (iso === state.filters.date) cls.push('sel');
-
-    grid.append(el('button', {
-      class: cls.join(' '),
-      type: 'button',
-      title: fmtDate(iso, { weekday: 'long', day: 'numeric', month: 'long' }),
-      onclick: () => {
-        state.filters.date = state.filters.date === iso ? null : iso;
-        renderBacklog();
-        renderCalendar(todayISO());
-        if (state.filters.date) location.hash = '#/backlog';
-      },
-    }, String(d), marked.has(iso) ? el('span', { class: 'cal-dot' }) : null));
-  }
-
-  const trail = (7 - ((lead + daysInMonth) % 7)) % 7;
-  for (let d = 1; d <= trail; d++) grid.append(el('div', { class: 'cal-day out', text: String(d) }));
 }
 
 /* ── backlog ─────────────────────────────────────────────── */
@@ -1483,7 +1543,7 @@ function backlogRow(item, today) {
   const meta = [
     rangeLabel(item, today),
     item.time ? fmtTime(item.time) : null,
-    item.note || null,
+    item.note ? notePreview(item.note) : null,
   ].filter(Boolean);
 
   return bindRowGestures(el('div', { class: 'brow' + (item.done ? ' done' : '') },
@@ -1501,13 +1561,6 @@ function backlogRow(item, today) {
       prioTag(item),
       rel ? el('span', { class: 'rel', text: rel }) : null,
       el('button', {
-        class: 'act', type: 'button',
-        title: item.done ? 'Mark not done' : 'Mark done',
-        'aria-label': item.done ? 'Mark not done' : 'Mark done',
-        svg: item.done ? UNDO_SVG : DONE_SVG,
-        onclick: () => toggleDone(item),
-      }),
-      el('button', {
         class: 'act del', type: 'button', title: 'Delete', 'aria-label': 'Delete',
         svg: X_SVG,
         onclick: () => removeItem(item),
@@ -1518,44 +1571,41 @@ function backlogRow(item, today) {
 
 function renderBacklog() {
   const today = todayISO();
-  const { types, status, range, date } = state.filters;
-  const bounds = rangeBounds(range, today);
+  const { types } = state.filters;
 
+  // Done items, and anything overdue, stay out of the Backlog by default —
+  // there's no manual "show done" toggle any more; the backup file is the
+  // place for history.
+  const matchesQuery = makeQueryMatcher(state.queryBacklog);
   const shown = state.items.filter((i) => {
     if (!matchesQuery(i)) return false;
     if (types.size && !types.has(i.type)) return false;
-    if (status === 'done' && !i.done) return false;
-    if (status === 'upcoming' && (i.done || i.date < today)) return false;
-    if (date && i.date !== date) return false;
-    if (bounds && (i.date < bounds[0] || i.date > bounds[1])) return false;
+    if (i.done || i.date < today) return false;
     return true;
   });
+
+  $('#pill-lookout-dot').hidden = !lookoutsDueSoon(today);
 
   for (const b of document.querySelectorAll('[data-tf]')) {
     const v = b.dataset.tf;
     b.setAttribute('aria-pressed', String(v === 'all' ? types.size === 0 : types.has(v)));
   }
-  for (const b of document.querySelectorAll('[data-sf]')) b.setAttribute('aria-pressed', String(b.dataset.sf === status));
-  for (const b of document.querySelectorAll('[data-rf]')) b.setAttribute('aria-pressed', String(b.dataset.rf === range));
-
-  $('#datechip').hidden = !date;
-  if (date) $('#datechip-txt').textContent = fmtDate(date, { weekday: 'short', day: 'numeric', month: 'short' });
 
   const total = state.items.length;
-  const open = state.items.filter((i) => i.type !== 'event' && !i.done).length;
-  $('#b-sub').textContent = `${total} item${total === 1 ? '' : 's'} · ${open} open · showing ${shown.length}`;
+  const open = state.items.filter((i) => isOpenItem(i, today)).length;
+  $('#b-sub').textContent = `${open} of ${total} open`;
 
   const host = $('#b-list');
   host.replaceChildren();
 
   if (!shown.length) {
-    host.append(el('div', { class: 'empty', text: state.query ? `Nothing matches “${state.query}”` : 'No items match these filters' }));
+    host.append(el('div', { class: 'empty', text: state.queryBacklog ? `Nothing matches “${state.queryBacklog}”` : 'No items match these filters' }));
     return;
   }
 
   const groups = new Map();
   for (const i of shown) {
-    const key = i.date || '';                       // undated look-outs bucket together
+    const key = i.date || '';                        // undated look-outs bucket together
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(i);
   }
@@ -1584,7 +1634,7 @@ function render() {
 /* ── form ────────────────────────────────────────────────── */
 
 function syncForm() {
-  const { type, priority } = state.form;
+  const { type, priority, dueSoonDays } = state.form;
   const date = $('#f-date').value;
 
   for (const b of document.querySelectorAll('#f-type button')) b.setAttribute('aria-selected', String(b.dataset.type === type));
@@ -1610,11 +1660,17 @@ function syncForm() {
   }
 
   $('#f-prio-wrap').hidden = !PRIORITIZED.has(type);
+
+  // Only look-outs have a due-soon threshold — how many days ahead of the
+  // due date the Backlog nav badge should light up for this one item.
+  $('#f-duesoon-wrap').hidden = type !== 'lookout';
+  if (type === 'lookout') $('#f-duesoon').value = dueSoonDays ?? 5;
 }
 
 function setType(type) {
   state.form.type = type;
   state.form.priority = PRIORITIZED.has(type) ? (state.form.priority || 'low') : null;
+  state.form.dueSoonDays = type === 'lookout' ? (state.form.dueSoonDays || 5) : null;
   applyDateDefault();
   syncForm();
 }
@@ -1638,8 +1694,37 @@ function applyDateDefault() {
   }
 }
 
+/**
+ * Enter on a "- subtask" line continues the list on the next line instead of
+ * dropping you back to plain text — Enter on an already-empty list line ends
+ * it instead of piling up dashes. Nothing new to look at; it only changes
+ * what happens when you're already mid-checklist.
+ */
+function wireNoteList() {
+  const ta = $('#f-note');
+  ta.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    const { selectionStart, selectionEnd, value } = ta;
+    if (selectionStart !== selectionEnd) return;
+    const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
+    const line = value.slice(lineStart, selectionStart);
+    const m = /^(-\s?)(.*)$/.exec(line);
+    if (!m) return;
+    e.preventDefault();
+    if (!m[2].trim()) {
+      ta.value = value.slice(0, lineStart) + value.slice(selectionStart);
+      ta.selectionStart = ta.selectionEnd = lineStart;
+    } else {
+      const insert = '\n- ';
+      ta.value = value.slice(0, selectionStart) + insert + value.slice(selectionStart);
+      ta.selectionStart = ta.selectionEnd = selectionStart + insert.length;
+    }
+  });
+}
+
 function wireForm() {
   wireTimeField();
+  wireNoteList();
 
   $('#f-type').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-type]');
@@ -1651,6 +1736,11 @@ function wireForm() {
     if (!b) return;
     state.form.priority = b.dataset.prio;   // a task always has one; low is the fallback, not "none"
     syncForm();
+  });
+
+  $('#f-duesoon').addEventListener('input', () => {
+    const n = Number($('#f-duesoon').value);
+    state.form.dueSoonDays = Number.isInteger(n) && n >= 0 ? n : 0;
   });
 
   $('#f-date').addEventListener('input', () => {
@@ -1700,6 +1790,7 @@ function wireForm() {
       time: timeField.value,
       note: $('#f-note').value.trim() || null,
       priority: PRIORITIZED.has(state.form.type) ? state.form.priority : null,
+      due_soon_days: state.form.type === 'lookout' ? state.form.dueSoonDays : null,
       end_date: state.form.range && date ? ($('#f-end').value || null) : null,
       daily: state.form.range && date ? state.form.daily : false,
     };
@@ -1710,7 +1801,7 @@ function wireForm() {
     try {
       if (editingId) {
         await api(`/api/items/${editingId}`, { method: 'PUT', body: JSON.stringify(payload) });
-        cancelEdit();
+        closeItemModal();
         await refresh();
         toast('Changes saved');
       } else {
@@ -1738,11 +1829,22 @@ function wireForm() {
   setType('event');
 }
 
+function openItemModal() {
+  $('#item-modal').hidden = false;
+  setTimeout(() => $('#f-title').focus(), 60);
+}
+
+function closeItemModal() {
+  $('#item-modal').hidden = true;
+  cancelEdit();
+}
+
 /** Load an existing item into the form for editing. */
 function loadForEdit(item) {
   state.editing = item.id;
   state.form.type = item.type;
   state.form.priority = item.priority || (PRIORITIZED.has(item.type) ? 'low' : null);
+  state.form.dueSoonDays = item.type === 'lookout' ? (item.due_soon_days ?? 5) : null;
   state.form.range = Boolean(item.end_date);
   state.form.daily = Boolean(item.daily);
   state.form.dateTouched = Boolean(item.date);
@@ -1752,22 +1854,16 @@ function loadForEdit(item) {
   $('#f-note').value = item.note || '';
   timeField.set(item.time || null);
 
-  $('#edit-note').hidden = false;
-  $('#edit-title').textContent = item.title;
+  $('#modal-title').textContent = 'Editing';
   $('#f-submit').textContent = 'Save changes';
   $('#f-err').textContent = '';
   syncForm();
-
-  location.hash = '#/backlog';
-  setTimeout(() => {
-    $('#form').scrollIntoView({ block: 'start', behavior: 'smooth' });
-    $('#f-title').focus();
-  }, 90);
+  openItemModal();
 }
 
 function cancelEdit() {
   state.editing = null;
-  $('#edit-note').hidden = true;
+  $('#modal-title').textContent = 'Add item';
   $('#f-submit').textContent = 'Add item';
   state.form.range = false;
   state.form.daily = false;
@@ -1781,6 +1877,30 @@ function cancelEdit() {
   setType('event');
 }
 
+/** A search box starts as just its icon; clicking it opens the input, which
+ * collapses back once it loses focus empty (Escape clears and collapses). */
+function wireSearchToggle(inputSelector) {
+  const input = $(inputSelector);
+  const box = input.closest('.search');
+  const toggle = box.querySelector('.search-toggle');
+
+  toggle.addEventListener('click', () => {
+    if (box.classList.contains('open')) input.focus();
+    else { box.classList.add('open'); input.focus(); }
+  });
+
+  input.addEventListener('blur', () => {
+    if (!input.value) box.classList.remove('open');
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (input.value) { input.value = ''; input.dispatchEvent(new Event('input')); }
+    box.classList.remove('open');
+    input.blur();
+  });
+}
+
 function wireFilters() {
   $('.filters').addEventListener('click', (e) => {
     const b = e.target.closest('button');
@@ -1791,45 +1911,26 @@ function wireFilters() {
       if (v === 'all') state.filters.types.clear();
       else if (state.filters.types.has(v)) state.filters.types.delete(v);
       else state.filters.types.add(v);
-    } else if (b.dataset.sf) {
-      state.filters.status = b.dataset.sf;
-    } else if (b.dataset.rf) {
-      state.filters.range = state.filters.range === b.dataset.rf ? null : b.dataset.rf;
-    } else if (b.id === 'datechip-x') {
-      state.filters.date = null;
-      renderCalendar(todayISO());
     }
     renderBacklog();
   });
 
-  // Two search boxes, one query — keep them in step.
-  for (const id of ['#q', '#q2']) {
-    $(id).addEventListener('input', (e) => {
-      state.query = e.target.value;
-      for (const other of ['#q', '#q2']) if (other !== id) $(other).value = state.query;
-      render();
-    });
+  // Today and Backlog each keep their own search — one doesn't affect the other.
+  $('#q').addEventListener('input', (e) => { state.queryToday = e.target.value; render(); });
+  $('#q2').addEventListener('input', (e) => { state.queryBacklog = e.target.value; render(); });
+  wireSearchToggle('#q');
+  wireSearchToggle('#q2');
+
+  $('#backup-btn').addEventListener('click', downloadBackup);
+
+  for (const trigger of [$('#tab-add'), $('#fab-add'), $('#zero-add')]) {
+    trigger.addEventListener('click', () => { cancelEdit(); openItemModal(); });
   }
-
-  $('#edit-cancel').addEventListener('click', cancelEdit);
-
-  $('#tab-add').addEventListener('click', () => {
-    cancelEdit();
-    location.hash = '#/backlog';
-    setTimeout(() => {
-      $('#f-title').focus();
-      $('#f-title').scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }, 90);
+  $('#item-modal-close').addEventListener('click', closeItemModal);
+  $('#item-modal').addEventListener('click', (e) => { if (e.target.id === 'item-modal') closeItemModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('#item-modal').hidden) closeItemModal();
   });
-
-  $('#cal-prev').addEventListener('click', () => { state.calMonth = monthShift(state.calMonth, -1); renderCalendar(todayISO()); });
-  $('#cal-next').addEventListener('click', () => { state.calMonth = monthShift(state.calMonth, 1); renderCalendar(todayISO()); });
-}
-
-function monthShift(ym, delta) {
-  const [y, m] = ym.split('-').map(Number);
-  const dt = new Date(Date.UTC(y, m - 1 + delta, 1));
-  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}`;
 }
 
 /* ── routing ─────────────────────────────────────────────── */
@@ -1840,6 +1941,7 @@ function route() {
   $('#view-backlog').classList.toggle('on', view === 'backlog');
   for (const a of document.querySelectorAll('[data-nav]')) a.classList.toggle('active', a.dataset.nav === view);
   document.title = view === 'backlog' ? 'Backlog · Planit' : 'Today · Planit';
+
   $('.main').scrollTop = 0;
   hideNotePeek();
 }
@@ -1850,6 +1952,7 @@ async function boot() {
   wireForm();
   wireFilters();
   wireNotePeek();
+  wireScribble();
   window.addEventListener('hashchange', route);
   route();
 
@@ -1858,6 +1961,7 @@ async function boot() {
   } catch (err) {
     toast(err.message, true);
   }
+  loadScribble();
 
   setInterval(() => { if ($('#view-today').classList.contains('on')) renderToday(); }, 30000);
   document.addEventListener('visibilitychange', () => {
