@@ -154,7 +154,11 @@ a{color:inherit;text-decoration:none}
 .routine-rail{display:none}
 
 @media (min-width:1300px){
-  #view-today.wrap{max-width:none}
+  /* Capped and centered rather than left-hugging an unbounded .wrap — on a
+     wide monitor that stops the Routine card drifting off to one side with
+     acres of empty space trailing it, which is what made it feel like a
+     stray, attention-grabbing object next to the tasks. */
+  #view-today.wrap{max-width:1160px;margin-left:auto;margin-right:auto}
   .t-cols{gap:32px}
   .routine-rail{display:block;flex:none;width:270px;position:sticky;top:24px}
 }
