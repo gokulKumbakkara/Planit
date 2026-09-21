@@ -458,6 +458,26 @@ textarea{resize:vertical;min-height:52px}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .toast.bad::before{background:var(--high)}
 
+/* ── completion celebration — fires once when everything for the day is
+   checked off: a small quiet confetti burst near the progress bar, plus
+   a one-line banner. Not a modal, nothing to dismiss, gone on its own. ── */
+.kudos-burst{position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:55}
+.kudos-piece{position:absolute;width:6px;height:6px;border-radius:2px;opacity:0;animation:kudos-pop .9s ease-out forwards}
+@keyframes kudos-pop{
+  0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1)}
+  100%{opacity:0;transform:translate(var(--kx),var(--ky)) rotate(var(--kr)) scale(.4)}
+}
+.kudos-banner{
+  position:fixed;left:50%;bottom:70px;transform:translateX(-50%) translateY(8px);
+  background:var(--surface-2);border:1px solid var(--accent-line);border-radius:8px;
+  padding:10px 18px;font-size:13px;color:var(--ink);box-shadow:0 14px 32px rgba(0,0,0,.45);
+  opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:56;
+}
+.kudos-banner.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){
+  .kudos-piece{animation:none}
+}
+
 /* Touch (iPad finger, iPhone) at any width: full tap targets, 16px inputs,
    controls not gated behind hover. A trackpad-equipped iPad keeps hover. */
 @media (hover: none) and (pointer: coarse){
@@ -1149,6 +1169,44 @@ function toast(msg, bad) {
   toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
 }
 
+const KUDOS_LINES = ['All done for today — nice work.', "Today's cleared.", 'Everything finished today.'];
+const KUDOS_COLORS = ['var(--accent)', 'var(--accent-dim)', 'var(--med)', 'var(--look)'];
+
+/** A small confetti burst off the progress bar plus a one-line banner — fires
+ * once when the day's last open item gets checked off, not on every render. */
+function celebrateToday() {
+  const anchor = $('#d-bar');
+  const rect = anchor ? anchor.getBoundingClientRect() : null;
+  const originX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+  const originY = rect ? rect.top : 140;
+
+  const burst = el('div', { class: 'kudos-burst' });
+  const N = 12;
+  for (let i = 0; i < N; i++) {
+    const angle = (Math.PI / (N - 1)) * i - Math.PI / 2 + (Math.random() - 0.5) * 0.5; // fans upward
+    const dist = 55 + Math.random() * 65;
+    const piece = el('span', { class: 'kudos-piece' });
+    piece.style.left = `${originX}px`;
+    piece.style.top = `${originY}px`;
+    piece.style.background = KUDOS_COLORS[i % KUDOS_COLORS.length];
+    piece.style.setProperty('--kx', `${Math.cos(angle) * dist}px`);
+    piece.style.setProperty('--ky', `${Math.sin(angle) * dist - 18}px`);
+    piece.style.setProperty('--kr', `${Math.random() * 240 - 120}deg`);
+    piece.style.animationDelay = `${Math.random() * 90}ms`;
+    burst.append(piece);
+  }
+  document.body.append(burst);
+  setTimeout(() => burst.remove(), 1300);
+
+  const banner = el('div', { class: 'kudos-banner', text: KUDOS_LINES[Math.floor(Math.random() * KUDOS_LINES.length)] });
+  document.body.append(banner);
+  requestAnimationFrame(() => banner.classList.add('on'));
+  setTimeout(() => {
+    banner.classList.remove('on');
+    setTimeout(() => banner.remove(), 300);
+  }, 2600);
+}
+
 /**
  * A note line written as "- Morning" is a tickable sub-item — a dose, a stop
  * on a checklist — rather than free text; ticking it rewrites the line as
@@ -1440,13 +1498,21 @@ function bindRowGestures(rowEl, item) {
 
   const HOLD_MS = 450;
   const DRIFT_PX = 10;
+  // An event has no checkbox — swiping it (trackpad/mouse: drag left,
+  // touch: swipe right) strikes it through as done instead.
+  const SWIPE_PX = 72;
+  const isEvent = item.type === 'event';
   let holdTimer = null;
   let holdFired = false;
   let startX = 0, startY = 0;
+  let dragDX = 0;
+  let dragging = false;
 
   const armHold = (x, y) => {
     startX = x; startY = y;
     holdFired = false;
+    dragDX = 0;
+    dragging = true;
     clearTimeout(holdTimer);
     holdTimer = item.note ? setTimeout(() => { holdFired = true; armSuppressPeekClick(); showNotePeek(item); }, HOLD_MS) : null;
   };
@@ -1458,27 +1524,61 @@ function bindRowGestures(rowEl, item) {
   };
   const disarmHold = () => { clearTimeout(holdTimer); holdTimer = null; };
 
-  // Mouse: click-and-hold.
+  // Follows the drag 1:1 while it's in flight (sign -1 = only leftward,
+  // +1 = only rightward) so the swipe reads as a real gesture, not a
+  // silent threshold; snaps back with a short transition if released short.
+  const followDrag = (x, sign) => {
+    dragDX = x - startX;
+    if (!isEvent) return;
+    const clamped = sign < 0 ? Math.min(0, dragDX) : Math.max(0, dragDX);
+    rowEl.style.transition = 'none';
+    rowEl.style.transform = clamped ? `translateX(${clamped}px)` : '';
+  };
+  const snapBack = () => {
+    if (!isEvent) return;
+    rowEl.style.transition = 'transform .18s ease';
+    rowEl.style.transform = '';
+  };
+
+  // Mouse: click-and-hold to peek; drag left past the threshold to complete.
   rowEl.addEventListener('mousedown', (e) => {
     if (isControl(e) || e.button !== 0) return;
     armHold(e.clientX, e.clientY);
   });
-  rowEl.addEventListener('mousemove', (e) => driftCheck(e.clientX, e.clientY));
-  rowEl.addEventListener('mouseup', disarmHold);
-  rowEl.addEventListener('mouseleave', disarmHold);
+  rowEl.addEventListener('mousemove', (e) => {
+    driftCheck(e.clientX, e.clientY);
+    if (dragging) followDrag(e.clientX, -1);
+  });
+  rowEl.addEventListener('mouseup', (e) => {
+    disarmHold();
+    const wasDragging = dragging;
+    dragging = false;
+    if (wasDragging && isEvent && !isControl(e) && dragDX <= -SWIPE_PX) toggleDone(item);
+    else snapBack();
+  });
+  rowEl.addEventListener('mouseleave', () => { disarmHold(); dragging = false; snapBack(); });
 
   // Touch: press-and-hold to peek, or two quick taps to edit — never both
   // for the same touch (a hold that already fired doesn't also count as a tap).
+  // Swiping right past the threshold completes an event instead of either.
   let lastTap = 0, lastTapX = 0, lastTapY = 0;
   rowEl.addEventListener('touchstart', (e) => {
     if (isControl(e)) return;
     const t = e.touches[0];
     armHold(t.clientX, t.clientY);
   }, { passive: true });
-  rowEl.addEventListener('touchmove', (e) => driftCheck(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  rowEl.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    driftCheck(t.clientX, t.clientY);
+    if (dragging) followDrag(t.clientX, 1);
+  }, { passive: true });
   rowEl.addEventListener('touchend', (e) => {
     disarmHold();
-    if (isControl(e) || holdFired) return;
+    const wasDragging = dragging;
+    dragging = false;
+    if (isControl(e) || holdFired) { snapBack(); return; }
+    if (wasDragging && isEvent && dragDX >= SWIPE_PX) { toggleDone(item); return; }
+    snapBack();
     const t = e.changedTouches[0];
     const now = Date.now();
     const closeEnough = Math.abs(t.clientX - lastTapX) < 30 && Math.abs(t.clientY - lastTapY) < 30;
@@ -1490,7 +1590,7 @@ function bindRowGestures(rowEl, item) {
       lastTap = now; lastTapX = t.clientX; lastTapY = t.clientY;
     }
   }, { passive: false });
-  rowEl.addEventListener('touchcancel', disarmHold);
+  rowEl.addEventListener('touchcancel', () => { disarmHold(); dragging = false; snapBack(); });
 
   return rowEl;
 }
@@ -1580,6 +1680,14 @@ function renderToday() {
   const pct = countable.length ? Math.round((done / countable.length) * 100) : 0;
   $('#d-bar').style.width = `${pct}%`;
   $('#d-count').textContent = `${done} of ${countable.length} done`;
+
+  // Celebrate the moment everything for today gets checked off — but only
+  // that moment: not on page load already at 100%, and not again on every
+  // render while it stays there. Un-completing something and finishing
+  // everything again later re-arms it, on purpose.
+  const isComplete = countable.length > 0 && done === countable.length;
+  if (isComplete && !state.todayComplete && state.todayComplete !== undefined) celebrateToday();
+  state.todayComplete = isComplete;
 
   // Events and tasks share one list now — compareTaskish already puts a
   // timed event ahead of untimed tasks, then orders by priority, so merging
